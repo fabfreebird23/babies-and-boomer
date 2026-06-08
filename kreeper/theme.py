@@ -101,7 +101,7 @@ h3{ color:#fff; }
   background:repeating-linear-gradient(180deg, rgba(75,45,159,.18) 0 2px, transparent 2px 6px); }
 .cut{ position:absolute; border:2px solid var(--gold); overflow:hidden; box-shadow:0 0 0 3px #000; }
 .cut svg{ display:block; width:100%; height:100%; }
-.cut.a{ width:128px; height:108px; top:18px; right:30px; }
+.cut.a{ width:128px; height:108px; top:44px; right:30px; }
 .cut.b{ width:108px; height:134px; top:96px; right:140px; }
 .cut.c{ width:136px; height:108px; bottom:18px; right:34px; }
 .lab{ position:absolute; display:inline-flex; font-family:'Oswald'; font-weight:700;
@@ -109,7 +109,7 @@ h3{ color:#fff; }
 .lab span{ padding:3px 8px; }
 .lab .w{ background:#fff; color:#000; }
 .lab .k{ background:#000; color:#fff; border:1px solid #fff; }
-.lab.t1{ top:130px; right:24px; }
+.lab.t1{ top:8px; right:26px; }
 .lab.t2{ top:78px; right:140px; }
 .lab.t3{ bottom:0; right:40px; }
 a.lab{ text-decoration:none; cursor:pointer; }
@@ -132,7 +132,7 @@ a.lab:hover .k{ background:var(--purple); border-color:var(--gold); color:#fff; 
 .stButton>button:hover{ background:var(--purple); color:#fff; box-shadow:0 0 0 2px var(--gold); }
 
 /* ---- shared custom tables ---- */
-.neonwrap{ overflow-x:auto; border:2px solid var(--gold); border-radius:0;
+.neonwrap{ overflow:auto; max-height:72vh; border:2px solid var(--gold); border-radius:0;
   background:#080611; box-shadow:0 12px 34px rgba(0,0,0,.5); }
 table.lb{ width:100%; border-collapse:collapse; font-family:'Oswald'; font-size:14px; }
 table.lb th{ background:var(--gold); color:#0a0712; text-transform:uppercase; letter-spacing:1px;
