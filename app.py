@@ -205,7 +205,8 @@ def build_candidate_rows(owner_id: str) -> pd.DataFrame:
         prof = H.keeper_profile(owner_id, pid, SEASON)
         rank = adp_rank_for(pm.name, pm.position)
         cost = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
-        from_rookie = bool(storage.prior_rookie_seasons(owner_id, pid, SEASON))
+        from_rookie = (bool(storage.prior_rookie_seasons(owner_id, pid, SEASON))
+                       and not ever_regular_keeper(pid))
         # A rookie->regular conversion under original_round mode is costed like a
         # Year-1 keeper anchored at the rookie draft round (snapped to a pick you own).
         conv_anchor = rookie_draft_round(pid) if (from_rookie and ROOKIE_CONV_MODE == "original_round") else None
@@ -266,12 +267,24 @@ def _years_exp(pid: str):
     return (H.players.get(str(pid)) or {}).get("years_exp")
 
 
+def ever_regular_keeper(pid: str) -> bool:
+    """True if the player has EVER been kept as a regular (non-rookie) keeper.
+    Moving a rookie keeper into a normal keeper slot is permanent — once they've
+    been a regular keeper they can never go back to a rookie-keeper spot."""
+    pid = str(pid)
+    return any(p == pid and (p, s) not in H.rookie_kept_set for (p, s) in H.kept_set)
+
+
 def rookie_keeper_eligible(owner_id: str, pid: str) -> bool:
     """A player may be kept as a ROOKIE keeper only if THIS team drafted them in
     the player's rookie season and has held them continuously since. A trade (or
-    picking them up as a veteran) breaks rookie-keeper eligibility.
+    picking them up as a veteran) breaks rookie-keeper eligibility, and so does
+    ever having been moved into a regular keeper slot (the conversion is permanent).
     """
     pid = str(pid)
+    # Converted to a regular keeper at some point -> can't return to a rookie slot.
+    if ever_regular_keeper(pid):
+        return False
     # An established rookie keeper for THIS owner stays eligible (seeded ledger
     # may predate our Sleeper draft window).
     if storage.prior_rookie_seasons(owner_id, pid, SEASON):
@@ -349,7 +362,7 @@ def build_value_leaderboard(top_n: int = 50, hide_rookie_keepers: bool = False) 
                 continue
             prof = H.keeper_profile(owner_id, pid, SEASON)
             cost = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
-            from_rookie = (owner_id, str(pid)) in rookie_hist
+            from_rookie = (owner_id, str(pid)) in rookie_hist and not ever_regular_keeper(pid)
             if from_rookie and hide_rookie_keepers:
                 continue
             if from_rookie:
@@ -699,7 +712,8 @@ def render_my_keepers() -> None:
         rank = adp_rank_for(r["Player"], r["Pos"])
         # Was a rookie keeper, now kept as a regular keeper. Under original_round
         # mode that costs their rookie draft round; the 3-year clock resets.
-        from_rookie = (not is_rookie) and bool(storage.prior_rookie_seasons(owner_id, pid, SEASON))
+        from_rookie = ((not is_rookie) and bool(storage.prior_rookie_seasons(owner_id, pid, SEASON))
+                       and not ever_regular_keeper(pid))
         if not is_rookie and not from_rookie:
             base = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
             if not base.eligible:
