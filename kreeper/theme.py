@@ -137,7 +137,7 @@ a.lab:hover .k{ background:var(--purple); border-color:var(--gold); color:#fff; 
 table.lb{ width:100%; border-collapse:collapse; font-family:'Oswald'; font-size:14px; }
 table.lb th{ background:var(--gold); color:#0a0712; text-transform:uppercase; letter-spacing:1px;
   font-family:'Anton'; font-weight:400; font-size:12px; text-align:left; padding:8px 10px;
-  position:sticky; top:0; }
+  position:sticky; top:0; z-index:5; box-shadow:0 2px 0 var(--gold); }
 table.lb th.r{ text-align:right; }
 table.lb td{ padding:6px 10px; border-bottom:1px solid var(--line); color:var(--ink); }
 table.lb tr:nth-child(odd) td{ background:rgba(75,45,159,.10); }
