@@ -1,0 +1,49 @@
+{
+  "964703051971887104": [
+    {
+      "player_id": "9509",
+      "player_name": "Bijan Robinson",
+      "position": "RB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "7547",
+      "player_name": "Amon-Ra St. Brown",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 1
+    },
+    {
+      "player_id": "9226",
+      "player_name": "De'Von Achane",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 3,
+      "cost_choice": null,
+      "cost_round": 2
+    },
+    {
+      "player_id": "12514",
+      "player_name": "Emeka Egbuka",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    },
+    {
+      "player_id": "7594",
+      "player_name": "Chuba Hubbard",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 2,
+      "cost_choice": null,
+      "cost_round": 7
+    }
+  ]
+}
