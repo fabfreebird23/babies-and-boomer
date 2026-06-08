@@ -1,0 +1,316 @@
+{
+  "964703051971887104": [
+    {
+      "player_id": "4881",
+      "player_name": "Lamar Jackson",
+      "is_rookie_keeper": false,
+      "cost_round": 5
+    },
+    {
+      "player_id": "9226",
+      "player_name": "De'Von Achane",
+      "is_rookie_keeper": false,
+      "cost_round": 9
+    },
+    {
+      "player_id": "7525",
+      "player_name": "DeVonta Smith",
+      "is_rookie_keeper": false,
+      "cost_round": 6
+    },
+    {
+      "player_id": "8155",
+      "player_name": "Breece Hall",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "9509",
+      "player_name": "Bijan Robinson",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "964742665126432768": [
+    {
+      "player_id": "4984",
+      "player_name": "Josh Allen",
+      "is_rookie_keeper": false,
+      "cost_round": 4
+    },
+    {
+      "player_id": "9224",
+      "player_name": "Chase Brown",
+      "is_rookie_keeper": false,
+      "cost_round": 9
+    },
+    {
+      "player_id": "7594",
+      "player_name": "Chuba Hubbard",
+      "is_rookie_keeper": false,
+      "cost_round": 10
+    },
+    {
+      "player_id": "11635",
+      "player_name": "Ladd McConkey",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "10859",
+      "player_name": "Sam LaPorta",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "964742534272446464": [
+    {
+      "player_id": "8112",
+      "player_name": "Drake London",
+      "is_rookie_keeper": false,
+      "cost_round": 4
+    },
+    {
+      "player_id": "5849",
+      "player_name": "Kyler Murray",
+      "is_rookie_keeper": false,
+      "cost_round": 13
+    },
+    {
+      "player_id": "6806",
+      "player_name": "J.K. Dobbins",
+      "is_rookie_keeper": false,
+      "cost_round": 10
+    },
+    {
+      "player_id": "11583",
+      "player_name": "Jonathon Brooks",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "8144",
+      "player_name": "Chris Olave",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "599073863350927360": [
+    {
+      "player_id": "7569",
+      "player_name": "Nico Collins",
+      "is_rookie_keeper": false,
+      "cost_round": 6
+    },
+    {
+      "player_id": "8137",
+      "player_name": "George Pickens",
+      "is_rookie_keeper": false,
+      "cost_round": 10
+    },
+    {
+      "player_id": "5844",
+      "player_name": "T.J. Hockenson",
+      "is_rookie_keeper": false,
+      "cost_round": 10
+    },
+    {
+      "player_id": "11566",
+      "player_name": "Jayden Daniels",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "11620",
+      "player_name": "Rome Odunze",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "952088015260774400": [
+    {
+      "player_id": "7564",
+      "player_name": "Ja'Marr Chase",
+      "is_rookie_keeper": false,
+      "cost_round": 1
+    },
+    {
+      "player_id": "5927",
+      "player_name": "Terry McLaurin",
+      "is_rookie_keeper": false,
+      "cost_round": 4
+    },
+    {
+      "player_id": "8150",
+      "player_name": "Kyren Williams",
+      "is_rookie_keeper": false,
+      "cost_round": 13
+    },
+    {
+      "player_id": "11637",
+      "player_name": "Keon Coleman",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "11604",
+      "player_name": "Brock Bowers",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "964746446002077696": [
+    {
+      "player_id": "6786",
+      "player_name": "CeeDee Lamb",
+      "is_rookie_keeper": false,
+      "cost_round": 1
+    },
+    {
+      "player_id": "11565",
+      "player_name": "J.J. McCarthy",
+      "is_rookie_keeper": false,
+      "cost_round": 15
+    },
+    {
+      "player_id": "11584",
+      "player_name": "Bucky Irving",
+      "is_rookie_keeper": false,
+      "cost_round": 14
+    },
+    {
+      "player_id": "9221",
+      "player_name": "Jahmyr Gibbs",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "11631",
+      "player_name": "Brian Thomas",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "964742545727098880": [
+    {
+      "player_id": "6794",
+      "player_name": "Justin Jefferson",
+      "is_rookie_keeper": false,
+      "cost_round": 1
+    },
+    {
+      "player_id": "8148",
+      "player_name": "Jameson Williams",
+      "is_rookie_keeper": false,
+      "cost_round": 10
+    },
+    {
+      "player_id": "10222",
+      "player_name": "Jayden Reed",
+      "is_rookie_keeper": false,
+      "cost_round": 13
+    },
+    {
+      "player_id": "11560",
+      "player_name": "Caleb Williams",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "8146",
+      "player_name": "Garrett Wilson",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "964725862010503168": [
+    {
+      "player_id": "5859",
+      "player_name": "A.J. Brown",
+      "is_rookie_keeper": false,
+      "cost_round": 2
+    },
+    {
+      "player_id": "9493",
+      "player_name": "Puka Nacua",
+      "is_rookie_keeper": false,
+      "cost_round": 13
+    },
+    {
+      "player_id": "8130",
+      "player_name": "Trey McBride",
+      "is_rookie_keeper": false,
+      "cost_round": 13
+    },
+    {
+      "player_id": "11632",
+      "player_name": "Malik Nabers",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "11626",
+      "player_name": "Xavier Legette",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "731597672364015616": [
+    {
+      "player_id": "4866",
+      "player_name": "Saquon Barkley",
+      "is_rookie_keeper": false,
+      "cost_round": 1
+    },
+    {
+      "player_id": "3198",
+      "player_name": "Derrick Henry",
+      "is_rookie_keeper": false,
+      "cost_round": 2
+    },
+    {
+      "player_id": "4217",
+      "player_name": "George Kittle",
+      "is_rookie_keeper": false,
+      "cost_round": 4
+    },
+    {
+      "player_id": "9488",
+      "player_name": "Jaxon Smith-Njigba",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    },
+    {
+      "player_id": "11628",
+      "player_name": "Marvin Harrison",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ],
+  "964873449275473920": [
+    {
+      "player_id": "6770",
+      "player_name": "Joe Burrow",
+      "is_rookie_keeper": false,
+      "cost_round": 4
+    },
+    {
+      "player_id": "6801",
+      "player_name": "Tee Higgins",
+      "is_rookie_keeper": false,
+      "cost_round": 4
+    },
+    {
+      "player_id": "6783",
+      "player_name": "Jerry Jeudy",
+      "is_rookie_keeper": false,
+      "cost_round": 11
+    },
+    {
+      "player_id": "10229",
+      "player_name": "Rashee Rice",
+      "is_rookie_keeper": true,
+      "cost_round": 16
+    }
+  ]
+}

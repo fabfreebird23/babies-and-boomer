@@ -1,0 +1,86 @@
+# Babies and Boomer — keeper dashboard configuration
+# Most of this was pulled directly from the Sleeper API. Edit league rules here.
+
+league:
+  name: "Babies and Boomer"
+  sleeper_league_id: "1312885282554535936"   # current (2026) season
+  current_season: 2026
+  num_teams: 10
+  draft_rounds: 16
+  scoring: ppr           # ppr | half | std  (used to pick which ADP feed to pull)
+  max_regular_keepers: 3 # Keeper 1/2/3
+  max_rookie_keepers: 2  # Rookie Keeper slots
+  # If true, a keeper must land on a draft pick the team still OWNS — if the cost
+  # round was traded away it bumps to the next-earlier owned pick. This league
+  # keeps it simple: a keeper just costs its computed round (draft/bump/ADP),
+  # regardless of which picks were traded, so leave this false.
+  enforce_owned_picks: false
+  # After this moment, "Set My Keepers" goes read-only (the board stays visible).
+  # Local wall-clock time in keeper_timezone below (DST handled automatically).
+  # Leave blank/remove for no deadline.
+  keeper_deadline:       # not set yet — submissions stay open
+  keeper_timezone: "America/Indiana/Indianapolis"  # Indiana Eastern (EST/EDT)
+
+# 2026 draft order isn't set yet (picks haven't been drawn), so there's no manual
+# override here. The Draft Board falls back to Sleeper's slot_to_roster_id and is
+# marked provisional until the order is drawn. Add a `draft_order:` list (owner IDs
+# in pick order, slot 1 first) once it's known.
+
+# Keeper rules (house rules — Sleeper can't tell us these)
+rules:
+  max_keep_years: 3      # a regular keeper can be kept at most this many years
+  year2_bump_rounds: 3   # 2nd year: cost moves up this many rounds (or ADP, manager's choice)
+  # rookie keepers can be kept for their whole career. Cost basis while in the rookie slot:
+  #   last_rounds     -> they take your last draft rounds (16, then 15, ...) first
+  #   original_round  -> locked at the round they were originally drafted as a rookie
+  #   fixed_round     -> always costs `rookie_fixed_round`
+  #   free            -> no draft pick cost
+  rookie_keeper_cost: last_rounds
+  rookie_fixed_round: 16
+  # When a ROOKIE keeper is moved into a regular keeper slot, what does that first
+  # regular-keeper year cost? (the 3-year clock starts at the conversion either way)
+  #   original_round  -> the round they were originally drafted in their rookie year
+  #   last_rounds     -> a last-round pick (the other league's rule)
+  rookie_conversion_cost: original_round
+  # Let a manager keep a player at their ADP round when the rule cost would be an
+  # EARLIER (more expensive) pick — i.e. ADP can lower a keeper's cost, never forced
+  # to overpay vs. market. ("you can use a lesser ADP value if you want.")
+  allow_adp_discount: true
+
+# Managers — Sleeper user_id -> display info. `name` is the friendly name shown in the app.
+managers:
+  "599073863350927360": { handle: ScrambledWaffles, name: "Jordan Keller",    team: "Rome Wasnt Built InOdunze" }
+  "731597672364015616": { handle: sbmeenagh,        name: "Sean Meenagh",     team: "GGs (Grandpa’s Girls)" }
+  "952088015260774400": { handle: Jmstrelow,        name: "Joey Strelow",     team: "Jmstrelow" }
+  "964703051971887104": { handle: badlife,          name: "Brandon Clifton",  team: "Guys who Fuck" }
+  "964725862010503168": { handle: jbutler3,         name: "Jacob Butler",     team: "Pukake" }
+  "964742534272446464": { handle: idkeller,         name: "Ian Keller",       team: "Hurrican Ian" }
+  "964742545727098880": { handle: GrantKenny,       name: "Grant Kenny",      team: "Grantonio Brown" }
+  "964742665126432768": { handle: Top6un44,         name: "Devin Hussey",     team: "Too Many Rooks" }
+  "964746446002077696": { handle: alexhaney,        name: "Alex Haney",       team: "NEIGHHHHHHHHHH" }
+  "964873449275473920": { handle: Tw78,             name: "Trevor Weldy",     team: "Hick Chicks" }
+
+# Map the inaugural-2022 draft columns (data/draft_2022.json) to current Sleeper
+# owner_ids. The round is owner-independent (keeper COST works without this), but
+# rookie-keeper ELIGIBILITY/continuity needs the right owner. Fill in the IDs for
+# any 2022 manager who is still in the league; leave blank for managers who left.
+legacy_2022_owners:
+  Brandon: "964703051971887104"   # Brandon Clifton — badlife
+  Devin:   "964742665126432768"   # Devin Hussey — Top6un44
+  Ian:     "964742534272446464"   # Ian Keller — idkeller
+  Jordan:  "599073863350927360"   # Jordan Keller — ScrambledWaffles
+  Joey:    "952088015260774400"   # Joey Strelow — Jmstrelow
+  Alex:    "964746446002077696"   # Alex Haney — alexhaney
+  Grant:   "964742545727098880"   # Grant Kenny — GrantKenny
+  Jacob:   "964725862010503168"   # Jacob Butler — jbutler3
+  Sean:    "731597672364015616"   # Sean Meenagh — sbmeenagh
+  Trevor:  "964873449275473920"   # Trevor Weldy — Tw78
+
+# ADP sources to pull and average into a consensus. Toggle any off if it gets flaky.
+adp_sources:
+  espn: true
+  fantasypros: true
+  footballguys: true
+  # Yahoo / Sleeper / Underdog are extracted from the FootballGuys & FantasyPros
+  # per-source columns when available (no separate scraper / OAuth needed).
+  include_aggregator_subcolumns: true
