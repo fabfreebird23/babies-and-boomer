@@ -138,6 +138,12 @@ def get_owned():
     return draftboard.owned_picks_by_owner()
 
 
+@st.cache_data(ttl=600, show_spinner=False)
+def get_owned_for(season: int):
+    """owner_id -> Counter of rounds owned for a given (incl. future) season."""
+    return draftboard.owned_picks_by_owner(season=season)
+
+
 def owned_for(owner_id: str):
     """The owned-pick Counter to cost keepers against, or None when the league
     doesn't enforce pick ownership (then a keeper just costs its computed round)."""
@@ -496,6 +502,59 @@ def build_trade_targets() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+@st.cache_data(ttl=86400, show_spinner=False)
+def position_keeper_caps() -> dict:
+    """Max keepers a team would realistically hold at a position, from the league's
+    starting lineup (you don't keep two QBs/TEs when you only start one). Positions
+    not listed are uncapped (RB/WR fill flex)."""
+    from collections import Counter
+    from kreeper import sleeper
+    rp = sleeper.get_league(LEAGUE["sleeper_league_id"]).get("roster_positions", [])
+    c = Counter(rp)
+    return {"QB": c.get("QB", 0) + c.get("SUPER_FLEX", 0) or 1,
+            "TE": c.get("TE", 0) or 1}
+
+
+def _select_keepers(team_lb, cap, pos_cap, seed_positions=None):
+    """Pick a team's realistic keeper set: top by value, but no more than the
+    positional cap at QB/TE. Returns a list of leaderboard rows."""
+    from collections import Counter
+    pcount = Counter(seed_positions or [])
+    chosen = []
+    for _, r in team_lb.sort_values("Value", ascending=False).iterrows():
+        if len(chosen) >= cap:
+            break
+        limit = pos_cap.get(r["Pos"])
+        if limit is not None and pcount[r["Pos"]] >= limit:
+            continue  # already keeping the max QBs/TEs
+        chosen.append(r)
+        pcount[r["Pos"]] += 1
+    return chosen
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _projected_kept_ids() -> set:
+    """player_ids likely off the draft board: everyone declared as a keeper, plus
+    each team's most valuable eligible keepers (respecting roster + positional
+    limits — no team keeps two QBs or two TEs)."""
+    declared_pos = {}   # owner -> [positions already declared]
+    kept = set()
+    for oid, picks in storage.load(SEASON).items():
+        for s in picks:
+            if s.get("player_id"):
+                kept.add(str(s["player_id"]))
+                declared_pos.setdefault(str(oid), []).append(s.get("position"))
+    lb = build_value_leaderboard(400)
+    cap = MAX_REG + MAX_ROOKIE
+    pos_cap = position_keeper_caps()
+    for o in MANAGERS:
+        seeded = declared_pos.get(str(o), [])
+        team = lb[(lb["Team"] == config.manager_name(o)) & (~lb["_pid"].astype(str).isin(kept))]
+        for r in _select_keepers(team, cap - len(seeded), pos_cap, seeded):
+            kept.add(str(r["_pid"]))
+    return kept
+
+
 def build_rookies_table(top_n: int = 40) -> pd.DataFrame:
     """This year's NFL rookies (years_exp == 0) ranked by consensus ADP."""
     name_idx = get_name_index()
@@ -599,11 +658,24 @@ def render_home() -> None:
     st.caption("Best keeper bargains across every roster — draft value gained by keeping a "
                "player (cost round vs. consensus ADP round). Green = declared keeper · "
                "purple RK = rookie keeper · cyan = free agent. Real NFL rookies are on the Rookies tab.")
-    hide_rk = st.toggle("Hide rookie keepers", value=False,
-                        help="Filter out players currently in rookie-keeper status.")
-    lb = build_value_leaderboard(50, hide_rookie_keepers=hide_rk)
+    fc1, fc2, fc3 = st.columns([1, 1, 1])
+    with fc1:
+        pos_f = st.selectbox("Position", ["All", "QB", "RB", "WR", "TE"], key="lb_pos")
+    with fc2:
+        team_f = st.selectbox("Team", ["All teams"] + [m["name"] for m in MANAGERS.values()] + ["Free Agent"], key="lb_team")
+    with fc3:
+        hide_rk = st.toggle("Hide rookie keepers", value=False,
+                            help="Filter out players currently in rookie-keeper status.")
+    lb = build_value_leaderboard(400, hide_rookie_keepers=hide_rk)
+    if not lb.empty:
+        if pos_f != "All":
+            lb = lb[lb["Pos"] == pos_f]
+        if team_f != "All teams":
+            lb = lb[lb["Team"] == team_f]
+        lb = lb.head(50).reset_index(drop=True)
+        lb["#"] = range(1, len(lb) + 1)
     if lb.empty:
-        st.info("No ADP data yet — run `python scripts/refresh_adp.py` to populate the board.")
+        st.info("No players match those filters (or no ADP data yet).")
     else:
         st.markdown(_leaderboard_html(lb), unsafe_allow_html=True)
     st.markdown(f'<h2>{theme.crt("board")}Submitted Keepers by Team</h2>', unsafe_allow_html=True)
@@ -681,15 +753,19 @@ def render_trade_targets() -> None:
         st.info("No keeper data yet — run `python scripts/refresh_adp.py` to populate ADP.")
         return
 
-    c1, c2 = st.columns([1, 1])
+    c1, c2, c3 = st.columns([1, 1, 1])
     with c1:
         rnd = st.selectbox("Keeper cost round", list(range(1, DRAFT_ROUNDS + 1)),
                            index=1, help="The round a keeper would cost you.")
     with c2:
+        pos_f = st.selectbox("Position", ["All", "QB", "RB", "WR", "TE"], key="tm_pos")
+    with c3:
         me = st.selectbox("Hide my own players (optional)",
                           ["— show everyone —"] + list(NAME_TO_ID.keys()), index=0)
 
     view = df[df["Cost Rd"] == rnd].copy()
+    if pos_f != "All":
+        view = view[view["Pos"] == pos_f]
     if me in NAME_TO_ID:
         view = view[view["Owner"] != me]
 
@@ -724,6 +800,256 @@ def render_trade_targets() -> None:
                "trade they convert to a regular keeper at the round they were originally "
                "drafted as a rookie (rookie status doesn't transfer and the 3-year clock "
                "starts), which is the cost shown here.")
+
+
+def build_record_book():
+    from kreeper import sleeper
+    chain = sleeper.league_chain(LEAGUE["sleeper_league_id"])
+    seasons = []  # newest first: {season, standings:[...], champ, runner}
+    agg = {o: {"w": 0, "l": 0, "pf": 0.0, "titles": 0, "runner": 0, "seasons": 0, "best": ""}
+           for o in MANAGERS}
+    for c in chain:
+        if c["season"] == SEASON:
+            continue
+        rosters = sleeper.get_rosters(c["league_id"])
+        r2o = {int(r["roster_id"]): str(r.get("owner_id")) for r in rosters}
+        champ = runner = None
+        try:
+            for m in sleeper.get_winners_bracket(c["league_id"]):
+                if m.get("p") == 1:
+                    champ, runner = r2o.get(m.get("w")), r2o.get(m.get("l"))
+        except Exception:  # noqa: BLE001
+            pass
+        standings = []
+        for r in rosters:
+            o = str(r.get("owner_id"))
+            s = r.get("settings", {}) or {}
+            w, l = s.get("wins", 0) or 0, s.get("losses", 0) or 0
+            pf = s.get("fpts", 0) + s.get("fpts_decimal", 0) / 100
+            standings.append({"owner": o, "name": config.manager_name(o), "w": w, "l": l, "pf": round(pf, 1)})
+            if o in agg:
+                agg[o]["w"] += w; agg[o]["l"] += l; agg[o]["pf"] += pf; agg[o]["seasons"] += 1
+                if o == champ:
+                    agg[o]["titles"] += 1
+                if o == runner:
+                    agg[o]["runner"] += 1
+        standings.sort(key=lambda x: (-x["w"], -x["pf"]))
+        seasons.append({"season": c["season"], "standings": standings,
+                        "champ": config.manager_name(champ) if champ else None,
+                        "runner": config.manager_name(runner) if runner else None})
+    return seasons, agg
+
+
+def render_record_book() -> None:
+    st.markdown(f'<h2>{theme.crt("top")}League Record Book</h2>', unsafe_allow_html=True)
+    seasons, agg = build_record_book()
+    if not seasons:
+        st.info("No completed seasons on record yet.")
+        return
+
+    st.markdown("##### 🏆 Champions")
+    champ_rows = "".join(
+        f'<tr><td class="rk">{s["season"]}</td>'
+        f'<td class="pl">🏆 {s["champ"] or "—"}</td>'
+        f'<td>runner-up: {s["runner"] or "—"}</td></tr>'
+        for s in seasons)
+    st.markdown('<div class="neonwrap"><table class="lb"><thead>'
+                '<tr><th>Season</th><th>Champion</th><th></th></tr></thead><tbody>'
+                + champ_rows + '</tbody></table></div>', unsafe_allow_html=True)
+
+    st.markdown("##### All-Time Standings")
+    rows = []
+    order = sorted(agg.items(),
+                   key=lambda kv: (kv[1]["titles"], kv[1]["w"] / max(1, kv[1]["w"] + kv[1]["l"])),
+                   reverse=True)
+    for i, (o, a) in enumerate(order, 1):
+        if a["seasons"] == 0:
+            continue
+        wp = a["w"] / max(1, a["w"] + a["l"])
+        rings = "🏆" * a["titles"]
+        rows.append(
+            f'<tr><td class="rk">{i}</td>'
+            f'<td class="pl">{config.manager_name(o)} {rings}</td>'
+            f'<td class="num">{a["w"]}-{a["l"]}</td>'
+            f'<td class="num">{wp:.3f}</td>'
+            f'<td class="num">{int(a["pf"])}</td>'
+            f'<td class="num">{a["titles"]}</td>'
+            f'<td class="num">{a["runner"]}</td></tr>'
+        )
+    head = ('<tr><th>#</th><th>Manager</th><th>All-Time</th><th>Win%</th>'
+            '<th>Points</th><th>Titles</th><th>Finals</th></tr>')
+    st.markdown('<div class="neonwrap"><table class="lb lb-record"><thead>' + head
+                + '</thead><tbody>' + "".join(rows) + '</tbody></table></div>',
+                unsafe_allow_html=True)
+
+    st.markdown("##### Season by Season")
+    for s in seasons:
+        title = f"{s['season']} — 🏆 {s['champ'] or '—'}"
+        with st.expander(title):
+            body = "".join(
+                f'<tr><td class="rk">{i}</td><td class="pl">{r["name"]}</td>'
+                f'<td class="num">{r["w"]}-{r["l"]}</td><td class="num">{r["pf"]}</td></tr>'
+                for i, r in enumerate(s["standings"], 1))
+            st.markdown('<table class="lb"><thead><tr><th>#</th><th>Team</th>'
+                        '<th>Record</th><th>Points</th></tr></thead><tbody>'
+                        + body + '</tbody></table>', unsafe_allow_html=True)
+
+
+def _draft_value(pos: int) -> int:
+    """Trade-value points for an asset at overall draft position `pos` (a standard
+    decaying draft-value curve; pick #1 ≈ 100)."""
+    return max(1, round(100 * (0.965 ** (max(1, pos) - 1))))
+
+
+def _pick_value(rnd: int) -> int:
+    """Points for a draft pick in a given round (valued at a mid-round slot)."""
+    return _draft_value((rnd - 1) * NT + NT // 2)
+
+
+def render_trade_analyzer() -> None:
+    st.markdown(f'<h2>{theme.crt("draft")}Trade Analyzer</h2>', unsafe_allow_html=True)
+    st.caption("Build a deal and grade it. Each player is valued by their talent "
+               "(ADP draft position) plus any keeper bargain on top; picks by a "
+               "draft-value curve. Higher total wins.")
+
+    tt = build_trade_targets()
+    if tt.empty:
+        st.info("No keeper data yet — run `python scripts/refresh_adp.py` to populate ADP.")
+        return
+    kv = {str(r["_pid"]): int(r["Value"]) for _, r in tt.iterrows()}     # keeper bargain (rounds)
+    adp = {str(r["_pid"]): int(r["ADP"]) for _, r in tt.iterrows()}      # ADP rank
+
+    names = list(NAME_TO_ID.keys())
+    c1, c2 = st.columns(2)
+    with c1:
+        a = st.selectbox("Team A", names, index=0, key="ta_a")
+    with c2:
+        b = st.selectbox("Team B", [n for n in names if n != a], index=0, key="ta_b")
+    oa, ob = NAME_TO_ID[a], NAME_TO_ID[b]
+
+    def roster_opts(oid):
+        out = {}
+        for pid in CANDS.get(oid, []):
+            pm = H.player_meta(pid)
+            if pm.position in ("QB", "RB", "WR", "TE"):
+                out[f"{pm.name} ({pm.position})"] = str(pid)
+        return out
+
+    pick_seasons = [SEASON, SEASON + 1, SEASON + 2]
+
+    def pick_opts(oid):
+        opts = []
+        for yr in pick_seasons:
+            owned = get_owned_for(yr).get(oid) or {}
+            for r in range(1, DRAFT_ROUNDS + 1):
+                for i in range(owned.get(r, 0)):
+                    opts.append(f"{yr} R{r}" + (f" (#{i+1})" if owned.get(r, 0) > 1 else ""))
+        return opts
+
+    ra, rb = roster_opts(oa), roster_opts(ob)
+    with c1:
+        a_pl = st.multiselect(f"{a} sends — players", list(ra.keys()), key="ta_apl")
+        a_pk = st.multiselect(f"{a} sends — picks", pick_opts(oa), key="ta_apk")
+    with c2:
+        b_pl = st.multiselect(f"{b} sends — players", list(rb.keys()), key="ta_bpl")
+        b_pk = st.multiselect(f"{b} sends — picks", pick_opts(ob), key="ta_bpk")
+
+    def player_value(pid):
+        """Talent (by ADP draft position) + a bonus for any keeper bargain."""
+        pid = str(pid)
+        ar = adp.get(pid) or adp_rank_for(H.player_meta(pid).name, H.player_meta(pid).position)
+        talent = _draft_value(int(ar)) if ar else 4
+        bonus = max(0, kv.get(pid, 0)) * 6   # cheap-keeper edge, on top of talent
+        return talent + bonus
+
+    def pick_pts(label):
+        # "2027 R1 (#2)" -> discounted value (future picks worth less, slot unknown)
+        yr = int(label.split()[0])
+        rnd = int(label.split()[1][1:])
+        discount = 0.8 ** (yr - SEASON)
+        return _pick_value(rnd) * discount
+
+    def side_value(players, ropts, picks):
+        pv = sum(player_value(ropts[p]) for p in players)
+        pc = sum(pick_pts(p) for p in picks)
+        return pv, pc
+
+    # What each team RECEIVES (the other side's outgoing assets).
+    a_pv, a_pc = side_value(b_pl, rb, b_pk)   # A receives B's stuff
+    b_pv, b_pc = side_value(a_pl, ra, a_pk)   # B receives A's stuff
+
+    if not (a_pl or a_pk or b_pl or b_pk):
+        st.info("Pick players and/or picks for each side to grade the deal.")
+        return
+
+    a_score, b_score = a_pv + a_pc, b_pv + b_pc
+    col1, col2 = st.columns(2)
+    for col, who, pv, pc, score in ((col1, a, a_pv, a_pc, a_score), (col2, b, b_pv, b_pc, b_score)):
+        col.markdown(f"#### {who} receives")
+        col.metric("Players", f"{round(pv)} pts", help="Talent (ADP position) + keeper bargain")
+        col.metric("Picks", f"{round(pc)} pts")
+        col.caption(f"Total value: **{round(score)}**")
+
+    diff = a_score - b_score
+    if abs(diff) <= max(10, 0.08 * max(a_score, b_score, 1)):
+        st.success("⚖️ Even deal — both sides come out roughly equal.")
+    else:
+        winner = a if diff > 0 else b
+        st.success(f"📈 Edge to **{winner}** by ~{abs(round(diff))} pts.")
+    st.caption("Heuristic only — player value = a draft-value curve at their ADP "
+               "plus a bonus for any keeper discount; picks use the same curve at a "
+               "mid-round slot. Future picks (next two years) are discounted ~20% "
+               "per year out. Doesn't model roster need or positional scarcity.")
+
+
+def render_keeper_landscape() -> None:
+    st.markdown(f'<h2>{theme.crt("board")}Keeper Landscape</h2>', unsafe_allow_html=True)
+    st.caption("Positional scarcity: of the top players at each position, who's "
+               "likely kept (and by whom) vs. left in the draft pool. Thin pools "
+               "= positions to target early; deep pools = wait.")
+    kept = _projected_kept_ids()
+    pid_owner = {}
+    for o, pids in CANDS.items():
+        for pid in pids:
+            pid_owner[str(pid)] = config.manager_name(o)
+    name_idx = get_name_index()
+    by_pos = {p: [] for p in ("RB", "WR", "QB", "TE")}
+    seen = set()
+    for _, ar in ADP_DF.iterrows():
+        pos, rank = ar.get("position"), ar.get("consensus_rank")
+        if pos not in by_pos or pd.isna(rank):
+            continue
+        pid = name_idx.get(normalize_name(ar["name"]), "")
+        if not pid or str(pid) in seen:
+            continue
+        seen.add(str(pid))
+        owner = pid_owner.get(str(pid)) if str(pid) in kept else None
+        by_pos[pos].append((int(rank), ar["name"], str(pid), owner))
+
+    tabs = st.tabs(["RB", "WR", "QB", "TE"])
+    for tab, pos in zip(tabs, ["RB", "WR", "QB", "TE"]):
+        with tab:
+            players = sorted(by_pos[pos], key=lambda x: x[0])[:18]
+            kept_n = sum(1 for *_, o in players if o)
+            avail_n = len(players) - kept_n
+            tone = "🔴 thin" if avail_n <= len(players) * 0.35 else ("🟡 moderate" if avail_n <= len(players) * 0.6 else "🟢 deep")
+            st.caption(f"Top {len(players)} {pos}s — **{kept_n} likely kept**, "
+                       f"**{avail_n} available**. Draft pool: {tone}.")
+            rows = []
+            for rank, nm, pid, owner in players:
+                if owner:
+                    status = f'<span style="color:#ff8a8a;">kept · {owner}</span>'
+                else:
+                    status = '<span class="kept-badge">AVAILABLE</span>'
+                rows.append(
+                    f'<tr><td class="rk">{rank}</td>'
+                    f'<td class="pl">{theme.img_tag(pid)}{nm}</td>'
+                    f'<td>{status}</td></tr>'
+                )
+            head = '<tr><th>ADP</th><th>Player</th><th>Status</th></tr>'
+            st.markdown('<div class="neonwrap"><table class="lb"><thead>' + head
+                        + '</thead><tbody>' + "".join(rows) + '</tbody></table></div>',
+                        unsafe_allow_html=True)
 
 
 def _saved_slip(owner_id: str):
@@ -968,12 +1294,14 @@ def build_championship_odds():
     # measure the talent retained (ADP) and the draft capital saved (value).
     lb = build_value_leaderboard(400)
     keep_n = MAX_REG + MAX_ROOKIE
+    pos_cap = position_keeper_caps()
     talent, kcap, best = {}, {}, {}
     for o in MANAGERS:
-        tl = lb[lb["Team"] == config.manager_name(o)].sort_values("Value", ascending=False).head(keep_n)
-        talent[o] = float(sum(max(0, 260 - int(a)) for a in tl["ADP"]))
-        kcap[o] = float(tl["Value"].sum())
-        best[o] = list(tl["Player"].head(3))
+        team = lb[lb["Team"] == config.manager_name(o)]
+        sel = _select_keepers(team, keep_n, pos_cap)  # realistic keep set (no 2 QB/TE)
+        talent[o] = float(sum(max(0, 260 - int(r["ADP"])) for r in sel))
+        kcap[o] = float(sum(r["Value"] for r in sel))
+        best[o] = [r["Player"] for r in sel[:3]]
 
     def _z(d):
         v = list(d.values())
@@ -1141,8 +1469,8 @@ with st.sidebar:
     st.markdown(theme.logo_html(30, None, "Babies &amp; Boomer"), unsafe_allow_html=True)
     st.caption(f"**{LEAGUE['name']}** · season **{SEASON}** · {NT} teams · "
                f"{DRAFT_ROUNDS} rds · {LEAGUE.get('scoring','ppr').upper()}")
-    PAGES = ["Home", "Title Odds", "Draft Board", "Set My Keepers",
-             "Trade Market", "Rookies", "Consensus ADP"]
+    PAGES = ["Home", "Title Odds", "Record Book", "Draft Board", "Keeper Landscape",
+             "Set My Keepers", "Trade Market", "Trade Analyzer", "Rookies", "Consensus ADP"]
     # Hero label tags (and any deep link) navigate via ?nav=<page>; apply it once
     # to the radio's state, then clear it so later sidebar clicks aren't overridden.
     _nav_qp = st.query_params.get("nav")
@@ -1180,5 +1508,11 @@ elif page == "Set My Keepers":
     render_my_keepers()
 elif page == "Trade Market":
     render_trade_targets()
+elif page == "Trade Analyzer":
+    render_trade_analyzer()
+elif page == "Keeper Landscape":
+    render_keeper_landscape()
+elif page == "Record Book":
+    render_record_book()
 else:
     render_adp()
