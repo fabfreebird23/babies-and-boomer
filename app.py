@@ -440,6 +440,62 @@ def build_value_leaderboard(top_n: int = 50, hide_rookie_keepers: bool = False) 
     return df
 
 
+def build_trade_targets() -> pd.DataFrame:
+    """Every rostered keeper's cost round — the round that carries over to a new
+    team on a trade. Lets you scout, for a round you'd keep someone at, which
+    players across the league you could deal for.
+    """
+    # (owner, player) pairs currently IN rookie-keeper status (not yet converted).
+    rookie_hist = set()
+    for yr in range(SEASON - 1, SEASON - 7, -1):
+        for oid, picks in storage.load(yr).items():
+            for s in picks:
+                if s.get("is_rookie_keeper") and s.get("player_id"):
+                    rookie_hist.add((str(oid), str(s["player_id"])))
+
+    rows = []
+    for owner_id, pids in CANDS.items():
+        mgr = config.manager_name(owner_id)
+        for pid in pids:
+            pm = H.player_meta(pid)
+            if pm.position not in ("QB", "RB", "WR", "TE"):
+                continue
+            if _years_exp(pid) == 0:
+                continue  # real NFL rookie -> Rookies tab
+            rank = adp_rank_for(pm.name, pm.position)
+            if not rank:
+                continue
+            from_rookie = ((str(owner_id), str(pid)) in rookie_hist
+                           and not ever_regular_keeper(pid))
+            if from_rookie:
+                # On a trade a rookie keeper converts to a regular keeper (the new
+                # owner didn't draft them as a rookie), costing the round they were
+                # originally drafted as a rookie — this league's conversion rule —
+                # with the 3-year clock starting at Year 1.
+                rdr = rookie_draft_round(pid)
+                cost_round, keep_yr = (rdr if rdr else DRAFT_ROUNDS), 1
+            else:
+                prof = H.keeper_profile(owner_id, pid, SEASON)
+                cost = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
+                if not cost.eligible:
+                    continue  # already kept the max years
+                inherits = prof.get("acquired_via") in ("draft", "trade") and prof.get("original_round")
+                # The keeper's natural round carries on a trade; undrafted/waiver
+                # pickups would slot at a last-round pick for the new owner.
+                cost_round = cost.recommended_round if inherits else DRAFT_ROUNDS
+                keep_yr = cost.keep_year if inherits else 1
+            if not cost_round:
+                continue
+            adp_round = engine.adp_rank_to_round(rank, NT)
+            rows.append({
+                "_pid": str(pid), "Player": pm.name, "Pos": pm.position,
+                "Owner": mgr, "Keep Yr": keep_yr, "Rookie": from_rookie,
+                "Cost Rd": int(cost_round), "ADP": int(rank), "ADP Rd": adp_round,
+                "Value": int(cost_round) - adp_round,
+            })
+    return pd.DataFrame(rows)
+
+
 def build_rookies_table(top_n: int = 40) -> pd.DataFrame:
     """This year's NFL rookies (years_exp == 0) ranked by consensus ADP."""
     name_idx = get_name_index()
@@ -612,6 +668,62 @@ def render_rookies() -> None:
     st.markdown('<div class="neonwrap" style="max-height:660px;overflow:auto;">'
                 '<table class="lb lb-rook"><thead>' + head + '</thead><tbody>'
                 + "".join(rows) + '</tbody></table></div>', unsafe_allow_html=True)
+
+
+def render_trade_targets() -> None:
+    st.markdown(f'<h2>{theme.crt("draft")}Keeper Trade Market</h2>', unsafe_allow_html=True)
+    st.caption("Pick the round you'd keep someone at — these are the players across "
+               "the league whose keeper cost is that round. The keeper round carries "
+               "over on a trade, so you could deal for one and keep them there. Best "
+               "value (cheapest relative to ADP) up top.")
+    df = build_trade_targets()
+    if df.empty:
+        st.info("No keeper data yet — run `python scripts/refresh_adp.py` to populate ADP.")
+        return
+
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        rnd = st.selectbox("Keeper cost round", list(range(1, DRAFT_ROUNDS + 1)),
+                           index=1, help="The round a keeper would cost you.")
+    with c2:
+        me = st.selectbox("Hide my own players (optional)",
+                          ["— show everyone —"] + list(NAME_TO_ID.keys()), index=0)
+
+    view = df[df["Cost Rd"] == rnd].copy()
+    if me in NAME_TO_ID:
+        view = view[view["Owner"] != me]
+
+    view = view.sort_values(["Value", "ADP"], ascending=[False, True])
+    if view.empty:
+        st.info(f"No keeper-eligible players cost Round {rnd} right now.")
+        return
+
+    rows = []
+    for i, (_, r) in enumerate(view.iterrows(), 1):
+        val = int(r["Value"])
+        color = "#7CFFB0" if val > 0 else ("#ff8a8a" if val < 0 else "#9b8fc4")
+        rk = ' <span class="rk-badge">RK</span>' if r.get("Rookie") else ""
+        rows.append(
+            f'<tr><td class="rk">{i}</td>'
+            f'<td class="pl">{theme.img_tag(r["_pid"])}{r["Player"]}{rk}</td>'
+            f'<td class="pos"><span class="posdot p-{r["Pos"]}"></span>{r["Pos"]}</td>'
+            f'<td>{r["Owner"]}</td>'
+            f'<td class="num">{r["Keep Yr"]}</td>'
+            f'<td class="num">{r["ADP"]}</td>'
+            f'<td class="num" style="color:{color};font-weight:600;">{val:+d}</td></tr>'
+        )
+    head = ('<tr><th>#</th><th>Player</th><th>Pos</th><th>Owner</th>'
+            '<th>Keep&nbsp;Yr</th><th>ADP</th><th class="r">Value</th></tr>')
+    st.markdown(f'<p style="margin:.2rem 0 .6rem;">Keepable at <b>Round {rnd}</b>:</p>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="neonwrap"><table class="lb lb-trade"><thead>' + head
+                + '</thead><tbody>' + "".join(rows) + '</tbody></table></div>',
+                unsafe_allow_html=True)
+    st.caption(f"Value = Round {rnd} − the player's ADP round (draft capital you'd "
+               "gain by keeping them there). **RK** = currently a rookie keeper — on a "
+               "trade they convert to a regular keeper at the round they were originally "
+               "drafted as a rookie (rookie status doesn't transfer and the 3-year clock "
+               "starts), which is the cost shown here.")
 
 
 def _saved_slip(owner_id: str):
@@ -1030,7 +1142,7 @@ with st.sidebar:
     st.caption(f"**{LEAGUE['name']}** · season **{SEASON}** · {NT} teams · "
                f"{DRAFT_ROUNDS} rds · {LEAGUE.get('scoring','ppr').upper()}")
     PAGES = ["Home", "Title Odds", "Draft Board", "Set My Keepers",
-             "Rookies", "Consensus ADP"]
+             "Trade Market", "Rookies", "Consensus ADP"]
     # Hero label tags (and any deep link) navigate via ?nav=<page>; apply it once
     # to the radio's state, then clear it so later sidebar clicks aren't overridden.
     _nav_qp = st.query_params.get("nav")
@@ -1066,5 +1178,7 @@ elif page == "Draft Board":
     render_draft_board()
 elif page == "Set My Keepers":
     render_my_keepers()
+elif page == "Trade Market":
+    render_trade_targets()
 else:
     render_adp()
