@@ -159,5 +159,43 @@
       "cost_choice": "Round 6",
       "cost_round": 6
     }
+  ],
+  "964742665126432768": [
+    {
+      "player_id": "9224",
+      "player_name": "Chase Brown",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 2,
+      "cost_choice": "Round 6",
+      "cost_round": 6
+    },
+    {
+      "player_id": "12481",
+      "player_name": "Cam Skattebo",
+      "position": "RB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "11635",
+      "player_name": "Ladd McConkey",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    },
+    {
+      "player_id": "2216",
+      "player_name": "Mike Evans",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": "Round 7",
+      "cost_round": 7
+    }
   ]
 }
