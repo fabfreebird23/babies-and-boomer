@@ -65,5 +65,52 @@
       "cost_choice": null,
       "cost_round": 15
     }
+  ],
+  "599073863350927360": [
+    {
+      "player_id": "12507",
+      "player_name": "Omarion Hampton",
+      "position": "RB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "8137",
+      "player_name": "George Pickens",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 2,
+      "cost_choice": "Round 5",
+      "cost_round": 5
+    },
+    {
+      "player_id": "7526",
+      "player_name": "Jaylen Waddle",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": "Round 6",
+      "cost_round": 6
+    },
+    {
+      "player_id": "11566",
+      "player_name": "Jayden Daniels",
+      "position": "QB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 4
+    },
+    {
+      "player_id": "11620",
+      "player_name": "Rome Odunze",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    }
   ]
 }
