@@ -1464,21 +1464,39 @@ def render_adp() -> None:
     st.dataframe(view, hide_index=True, use_container_width=True, height=600)
 
 
-# ---------------------------------------------------------------- sidebar + nav
+# ----------------------------------------------------------------- navigation
+# Consolidated sections, each grouping related pages under sub-tabs. Routing via a
+# `?p=` query param so the nav links are real, shareable, static links present on
+# every page (the hero label tags link to these same sections).
+SECTIONS = [
+    ("home", "Home"),
+    ("keepers", "Keepers"),
+    ("draft", "Draft Board"),
+    ("trades", "Trades"),
+    ("league", "League"),
+    ("players", "Players"),
+]
+_VALID = {k for k, _ in SECTIONS}
+page = st.query_params.get("p", "home")
+if page not in _VALID:
+    page = "home"
+
+# Static top bar on every page: clickable B&B logo (-> Home) + section links.
+navlinks = "".join(
+    f'<a class="navlink{" active" if k == page else ""}" href="?p={k}" target="_self">{label}</a>'
+    for k, label in SECTIONS
+)
+st.markdown(
+    '<div class="kbar">'
+    '<a class="khome" href="?p=home" target="_self">' + theme.logo_html(30, None, "B&amp;B") + '</a>'
+    f'<div class="topnav">{navlinks}</div></div>',
+    unsafe_allow_html=True,
+)
+
+# Sidebar keeps league info + ADP freshness (secondary).
 with st.sidebar:
-    st.markdown(theme.logo_html(30, None, "Babies &amp; Boomer"), unsafe_allow_html=True)
     st.caption(f"**{LEAGUE['name']}** · season **{SEASON}** · {NT} teams · "
                f"{DRAFT_ROUNDS} rds · {LEAGUE.get('scoring','ppr').upper()}")
-    PAGES = ["Home", "Title Odds", "Record Book", "Draft Board", "Keeper Landscape",
-             "Set My Keepers", "Trade Market", "Trade Analyzer", "Rookies", "Consensus ADP"]
-    # Hero label tags (and any deep link) navigate via ?nav=<page>; apply it once
-    # to the radio's state, then clear it so later sidebar clicks aren't overridden.
-    _nav_qp = st.query_params.get("nav")
-    if _nav_qp:
-        if _nav_qp in PAGES:
-            st.session_state["nav"] = _nav_qp
-        del st.query_params["nav"]
-    page = st.radio("Navigate", PAGES, key="nav", label_visibility="collapsed")
     st.divider()
     st.subheader("ADP freshness")
     if ADP_META:
@@ -1496,23 +1514,31 @@ with st.sidebar:
                "regular slot costs the round they were drafted as a rookie (clock restarts) · "
                "trades carry the keeper round over.")
 
-if page == "Home":
+if page == "home":
     render_home()
-elif page == "Title Odds":
-    render_odds()
-elif page == "Rookies":
-    render_rookies()
-elif page == "Draft Board":
+elif page == "keepers":
+    t1, t2 = st.tabs(["📋 Set My Keepers", "🗺️ Keeper Landscape"])
+    with t1:
+        render_my_keepers()
+    with t2:
+        render_keeper_landscape()
+elif page == "draft":
     render_draft_board()
-elif page == "Set My Keepers":
-    render_my_keepers()
-elif page == "Trade Market":
-    render_trade_targets()
-elif page == "Trade Analyzer":
-    render_trade_analyzer()
-elif page == "Keeper Landscape":
-    render_keeper_landscape()
-elif page == "Record Book":
-    render_record_book()
-else:
-    render_adp()
+elif page == "trades":
+    t1, t2 = st.tabs(["🔁 Trade Market", "⚖️ Trade Analyzer"])
+    with t1:
+        render_trade_targets()
+    with t2:
+        render_trade_analyzer()
+elif page == "league":
+    t1, t2 = st.tabs(["🎲 Title Odds", "🏆 Record Book"])
+    with t1:
+        render_odds()
+    with t2:
+        render_record_book()
+elif page == "players":
+    t1, t2 = st.tabs(["🆕 Rookies", "📊 Consensus ADP"])
+    with t1:
+        render_rookies()
+    with t2:
+        render_adp()

@@ -196,10 +196,31 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .sneak{ display:inline-block; vertical-align:middle; height:42px; margin:0 14px 6px 0;
   filter:drop-shadow(3px 3px 0 rgba(40,24,79,.9)); }
 
+/* static top navigation bar (Eastbay label tags) */
+.kbar{ display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  padding-bottom:10px; margin-bottom:14px; border-bottom:3px solid var(--gold); }
+.khome{ text-decoration:none !important; line-height:1; }
+.khome .neon-logo{ font-size:30px; margin:0; }
+.topnav{ display:flex; gap:8px; flex-wrap:wrap; }
+.navlink{ font-family:'Anton'; text-transform:uppercase; letter-spacing:1px; font-size:13px;
+  color:#fff !important; text-decoration:none !important; padding:6px 13px; border-radius:0;
+  border:1px solid #fff; background:#000; transition:.12s; white-space:nowrap; }
+.navlink:hover{ border-color:var(--gold); color:var(--gold) !important; }
+.navlink.active{ background:var(--gold); color:#000 !important; border-color:var(--gold); }
+
+/* sub-tabs (st.tabs) -> gold accent */
+[data-baseweb="tab-list"]{ border-bottom:2px solid var(--line) !important; }
+button[data-baseweb="tab"] [data-testid="stMarkdownContainer"] p{ font-family:'Anton'; letter-spacing:1px; text-transform:uppercase; font-size:14px; }
+[data-baseweb="tab-highlight"]{ background:var(--gold) !important; }
+button[data-baseweb="tab"][aria-selected="true"]{ color:var(--gold) !important; }
+
 /* ---------------- mobile ---------------- */
 @media (max-width: 640px){
   .neon-logo{ font-size:40px !important; -webkit-text-stroke-width:2px; }
   .neon-tag{ font-size:8px; letter-spacing:4px; }
+  .kbar{ gap:8px; }
+  .khome .neon-logo{ font-size:24px !important; }
+  .navlink{ font-size:11px; padding:5px 9px; letter-spacing:.5px; }
   h1{ font-size:1.5rem !important; }
   h2{ font-size:1.25rem !important; }
   h3{ font-size:1.15rem !important; }
@@ -307,19 +328,18 @@ def masthead(name: str, tagline: str, vol: str, sub: str, px: str) -> str:
 
 
 def hero(kicker: str, line1: str, line2: str, deck_html: str,
-         tags=(("Draft", "Board", "Draft Board"),
-               ("Set", "Keepers", "Set My Keepers"),
-               ("Title", "Odds", "Title Odds"))) -> str:
+         tags=(("Draft", "Board", "draft"),
+               ("Set", "Keepers", "keepers"),
+               ("Title", "Odds", "league"))) -> str:
     """Cover-style hero band: big headline + football cut-outs + clickable label
-    tags. Each tag links to ?nav=<page>, which the sidebar radio reads to switch.
+    tags. Each tag links to ?p=<section>, the same query param the top nav uses.
     A tag whose second segment is empty renders as a single label."""
-    from urllib.parse import quote
 
     def _tag(i, a, b, nav):
         inner = f'<span class="w">{a}</span>'
         if b:
             inner += f'<span class="k">{b}</span>'
-        return (f'<a class="lab t{i+1}" href="?nav={quote(nav)}" target="_self">'
+        return (f'<a class="lab t{i+1}" href="?p={nav}" target="_self">'
                 f'{inner}</a>')
 
     labs = "".join(_tag(i, a, b, nav) for i, (a, b, nav) in enumerate(tags))
