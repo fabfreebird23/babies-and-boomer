@@ -86,22 +86,13 @@
       "cost_round": 5
     },
     {
-      "player_id": "7526",
-      "player_name": "Jaylen Waddle",
-      "position": "WR",
-      "is_rookie_keeper": false,
-      "keep_year": 1,
-      "cost_choice": "Round 6",
-      "cost_round": 6
-    },
-    {
       "player_id": "11566",
       "player_name": "Jayden Daniels",
       "position": "QB",
       "is_rookie_keeper": false,
       "keep_year": 1,
       "cost_choice": null,
-      "cost_round": 4
+      "cost_round": 6
     },
     {
       "player_id": "11620",
@@ -111,6 +102,15 @@
       "keep_year": "Rookie",
       "cost_choice": null,
       "cost_round": 15
+    },
+    {
+      "player_id": "11583",
+      "player_name": "Jonathon Brooks",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 14
     }
   ],
   "952088015260774400": [
