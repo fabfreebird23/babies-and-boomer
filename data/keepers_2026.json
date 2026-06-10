@@ -112,5 +112,52 @@
       "cost_choice": null,
       "cost_round": 15
     }
+  ],
+  "952088015260774400": [
+    {
+      "player_id": "11604",
+      "player_name": "Brock Bowers",
+      "position": "TE",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "8150",
+      "player_name": "Kyren Williams",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 3,
+      "cost_choice": null,
+      "cost_round": 4
+    },
+    {
+      "player_id": "12517",
+      "player_name": "Colston Loveland",
+      "position": "TE",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    },
+    {
+      "player_id": "12519",
+      "player_name": "Luther Burden",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 9
+    },
+    {
+      "player_id": "4983",
+      "player_name": "DJ Moore",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": "Round 6",
+      "cost_round": 6
+    }
   ]
 }
