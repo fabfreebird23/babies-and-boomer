@@ -777,7 +777,7 @@ def render_trade_targets() -> None:
     rows = []
     for i, (_, r) in enumerate(view.iterrows(), 1):
         val = int(r["Value"])
-        color = "#7CFFB0" if val > 0 else ("#ff8a8a" if val < 0 else "#9b8fc4")
+        color = "#1c9b63" if val > 0 else ("#c0392b" if val < 0 else "#8a7fb3")
         rk = ' <span class="rk-badge">RK</span>' if r.get("Rookie") else ""
         rows.append(
             f'<tr><td class="rk">{i}</td>'
@@ -1038,7 +1038,7 @@ def render_keeper_landscape() -> None:
             rows = []
             for rank, nm, pid, owner in players:
                 if owner:
-                    status = f'<span style="color:#ff8a8a;">kept · {owner}</span>'
+                    status = f'<span style="color:#b3235a;">kept · {owner}</span>'
                 else:
                     status = '<span class="kept-badge">AVAILABLE</span>'
                 rows.append(
