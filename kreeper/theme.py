@@ -323,22 +323,9 @@ def masthead(name: str, tagline: str, vol: str, sub: str, px: str) -> str:
     )
 
 
-def hero(kicker: str, line1: str, line2: str, deck_html: str,
-         tags=(("Draft", "Board", "draft"),
-               ("Set", "Keepers", "keepers"),
-               ("Title", "Odds", "league"))) -> str:
-    """Cover-style hero band: big headline + football cut-outs + clickable label
-    tags. Each tag links to ?p=<section>, the same query param the top nav uses.
-    A tag whose second segment is empty renders as a single label."""
-
-    def _tag(i, a, b, nav):
-        inner = f'<span class="w">{a}</span>'
-        if b:
-            inner += f'<span class="k">{b}</span>'
-        return (f'<a class="lab t{i+1}" href="?p={nav}" target="_self">'
-                f'{inner}</a>')
-
-    labs = "".join(_tag(i, a, b, nav) for i, (a, b, nav) in enumerate(tags))
+def hero(kicker: str, line1: str, line2: str, deck_html: str) -> str:
+    """Cover-style hero band: big headline + football cut-outs. (The section
+    label tags were removed — the top nav already links to those pages.)"""
     cuts = (
         f'<div class="cut a">{_football(128, 108, GOLD, "#ece5fb")}</div>'
         f'<div class="cut b">{_football(108, 134, PURPLE, GOLD)}</div>'
@@ -349,7 +336,7 @@ def hero(kicker: str, line1: str, line2: str, deck_html: str,
         f'<div class="eb-left"><div class="kicker">{kicker}</div>'
         f'<div class="eb-headline"><div class="l1">{line1}</div><div class="l2">{line2}</div></div>'
         f'<div class="eb-deck">{deck_html}</div></div>'
-        f'<div class="eb-cuts">{cuts}{labs}</div>'
+        f'<div class="eb-cuts">{cuts}</div>'
         '</div></div>'
     )
 
