@@ -45,5 +45,25 @@
       "cost_choice": null,
       "cost_round": 7
     }
+  ],
+  "964725862010503168": [
+    {
+      "player_id": "11632",
+      "player_name": "Malik Nabers",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "12526",
+      "player_name": "Tetairoa McMillan",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    }
   ]
 }
