@@ -197,5 +197,43 @@
       "cost_choice": "Round 7",
       "cost_round": 7
     }
+  ],
+  "964742534272446464": [
+    {
+      "player_id": "12527",
+      "player_name": "Ashton Jeanty",
+      "position": "RB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "8112",
+      "player_name": "Drake London",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 3,
+      "cost_choice": null,
+      "cost_round": 2
+    },
+    {
+      "player_id": "8144",
+      "player_name": "Chris Olave",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    },
+    {
+      "player_id": "12508",
+      "player_name": "Jaxson Dart",
+      "position": "QB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 14
+    }
   ]
 }
