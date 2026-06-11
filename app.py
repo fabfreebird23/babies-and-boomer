@@ -191,6 +191,27 @@ def get_espn_headshots():
 H = get_history()
 CANDS = get_candidates()
 ADP_DF, ADP_LK, ADP_META = get_adp()
+
+# player_id -> the owner who CURRENTLY rosters them (after Sleeper trades). Lets us
+# drop a declared keeper from a team that has since traded the player away.
+PID_OWNER = {str(p): str(o) for o, pids in CANDS.items() for p in pids}
+
+
+def submitted_keepers(season=None):
+    """Saved keeper selections, dropping any player no longer on that owner's
+    current Sleeper roster (e.g. traded away after declaring them). Use this for
+    every CURRENT-season submission display; historical reads keep storage.load(yr)."""
+    season = season or SEASON
+    out = {}
+    for oid, picks in storage.load(season).items():
+        out[str(oid)] = [s for s in picks
+                         if s.get("player_id") and PID_OWNER.get(str(s["player_id"])) == str(oid)]
+    return out
+
+
+def manager_submitted(owner_id, season=None):
+    """A single manager's still-rostered submitted keepers (post-trade aware)."""
+    return submitted_keepers(season).get(str(owner_id), [])
 theme.set_espn_ids(get_espn_headshots())
 
 
@@ -337,7 +358,7 @@ def build_value_leaderboard(top_n: int = 50, hide_rookie_keepers: bool = False) 
     Real NFL rookies (years_exp == 0) are excluded — they live on the Rookies tab.
     """
     # Players already declared as keepers (match by Sleeper id and by name).
-    submitted = storage.load(SEASON)
+    submitted = submitted_keepers()
     kept_ids, kept_names = set(), set()
     for picks in submitted.values():
         for s in picks:
@@ -539,7 +560,7 @@ def _projected_kept_ids() -> set:
     limits — no team keeps two QBs or two TEs)."""
     declared_pos = {}   # owner -> [positions already declared]
     kept = set()
-    for oid, picks in storage.load(SEASON).items():
+    for oid, picks in submitted_keepers().items():
         for s in picks:
             if s.get("player_id"):
                 kept.add(str(s["player_id"]))
@@ -567,7 +588,7 @@ def team_keeper_rows(owner_id) -> list:
     """The keeper set a team would likely carry (declared + best by value, with
     positional caps). Returns leaderboard rows."""
     lb = build_value_leaderboard(400)
-    declared = [s for s in storage.load(SEASON).get(str(owner_id), []) if s.get("player_id")]
+    declared = manager_submitted(owner_id)
     seeded = [s.get("position") for s in declared]
     declared_ids = {str(s["player_id"]) for s in declared}
     team = lb[lb["Team"] == config.manager_name(owner_id)]
@@ -636,7 +657,7 @@ def _leaderboard_html(df) -> str:
 
 
 def render_team_boxes() -> None:
-    data = storage.load(SEASON)
+    data = submitted_keepers()
     cards = []
     for oid, m in MANAGERS.items():
         picks = data.get(oid, [])
@@ -705,7 +726,7 @@ def render_home() -> None:
     render_team_boxes()
 
     # Export — grab every submitted keeper to paste into the year-to-year sheet.
-    data = storage.load(SEASON)
+    data = submitted_keepers()
     if any(data.values()):
         export = []
         for oid, m in MANAGERS.items():
@@ -1319,7 +1340,7 @@ def render_superlatives() -> None:
 
 def _saved_slip(owner_id: str):
     """Read-only table of a manager's already-submitted keepers (or None)."""
-    saved = storage.get_manager_selections(owner_id, SEASON)
+    saved = manager_submitted(owner_id)
     if not saved:
         return None
     rows = [{
@@ -1362,7 +1383,7 @@ def render_my_keepers() -> None:
         st.warning("No skill-position players found on your roster.")
         return
 
-    saved = {s["player_id"]: s for s in storage.get_manager_selections(owner_id, SEASON)}
+    saved = {s["player_id"]: s for s in manager_submitted(owner_id)}
     df["Keep"] = df["player_id"].map(lambda p: p in saved)
     df["Rookie Keeper"] = df["player_id"].map(
         lambda p: bool(saved.get(p, {}).get("is_rookie_keeper", False)))
@@ -1655,7 +1676,7 @@ def render_draft_board() -> None:
     # round (when the team owns two of that pick) split across both cells instead
     # of stacking. Each cell is used at most once.
     from collections import defaultdict
-    data = storage.load(SEASON)
+    data = submitted_keepers()
     owner_to_slot = board["owner_to_slot"]
     owner_to_roster = board["owner_to_roster"]
     owned_slots = defaultdict(list)  # (round, roster_id) -> [slots that roster owns]
