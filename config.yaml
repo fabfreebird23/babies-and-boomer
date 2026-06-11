@@ -21,10 +21,18 @@ league:
   keeper_deadline:       # not set yet — submissions stay open
   keeper_timezone: "America/Indiana/Indianapolis"  # Indiana Eastern (EST/EDT)
 
-# 2026 draft order isn't set yet (picks haven't been drawn), so there's no manual
-# override here. The Draft Board falls back to Sleeper's slot_to_roster_id and is
-# marked provisional until the order is drawn. Add a `draft_order:` list (owner IDs
-# in pick order, slot 1 first) once it's known.
+# 2026 draft order (slot 1 picks first), drawn in Sleeper. Owner IDs in pick order.
+draft_order:
+  - "964873449275473920"  # 1. Trevor Weldy
+  - "952088015260774400"  # 2. Joey Strelow
+  - "964742665126432768"  # 3. Devin Hussey
+  - "599073863350927360"  # 4. Jordan Keller
+  - "964742545727098880"  # 5. Grant Kenny
+  - "964746446002077696"  # 6. Alex Haney
+  - "731597672364015616"  # 7. Sean Meenagh
+  - "964725862010503168"  # 8. Jacob Butler
+  - "964703051971887104"  # 9. Brandon Clifton
+  - "964742534272446464"  # 10. Ian Keller
 
 # Keeper rules (house rules — Sleeper can't tell us these)
 rules:
