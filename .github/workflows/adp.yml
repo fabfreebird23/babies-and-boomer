@@ -28,7 +28,7 @@ jobs:
         run: |
           git config user.name "bab-bot"
           git config user.email "actions@github.com"
-          git add data/adp_*.csv data/adp_*_meta.json
+          git add data/adp_*.csv data/adp_*_meta.json data/adp_history_*.json
           if git diff --cached --quiet; then
             echo "No ADP changes."
           else
