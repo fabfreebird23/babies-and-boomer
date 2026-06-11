@@ -22,6 +22,10 @@ def main() -> int:
     for k, v in meta.get("status", {}).items():
         print(f"  {'OK ' if v.startswith('ok') else 'ERR'} {k}: {v}")
     print(f"Wrote {len(df)} players · sources: {', '.join(meta.get('sources', []))}")
+    # Save a daily ADP snapshot so the Risers & Fallers (ADP Trends) tab has history.
+    if not df.empty:
+        days = consensus.snapshot(season)
+        print(f"ADP history snapshot saved ({days} day(s) on record).")
     # Fail the job only if every source died.
     ok = any(v.startswith("ok") for v in meta.get("status", {}).values())
     return 0 if ok else 1
