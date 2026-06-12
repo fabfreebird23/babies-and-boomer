@@ -55,6 +55,10 @@ rules:
   # to overpay vs. market. ("you can use a lesser ADP value if you want.")
   allow_adp_discount: true
 
+# Projected Draft rookie premium: a rookie's mock-draft rank = ADP rank × this
+# (lower = rookies get drafted earlier). 1.0 = no premium.
+mock_draft_rookie_factor: 0.4
+
 # Managers — Sleeper user_id -> display info. `name` is the friendly name shown in the app.
 managers:
   "599073863350927360": { handle: ScrambledWaffles, name: "Jordan Keller",    team: "Rome Wasnt Built InOdunze" }

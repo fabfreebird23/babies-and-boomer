@@ -1338,6 +1338,111 @@ def render_superlatives() -> None:
     st.markdown('<div class="kcards">' + "".join(cards) + "</div>", unsafe_allow_html=True)
 
 
+def build_mock_draft(rookie_factor: float | None = None) -> pd.DataFrame:
+    """A full projected draft board: each team's likely KEEPERS occupy their pick
+    slots, and every other pick is filled by the best available player (ADP with
+    our league's rookie premium). Accounts for traded picks via the real board."""
+    if rookie_factor is None:
+        rookie_factor = config.mock_draft_rookie_factor()
+    board = get_board()
+    cells, rounds = board["cells"], board["rounds"]
+    owner_to_roster = board["owner_to_roster"]
+
+    # 1) Place each team's projected keepers onto a pick they OWN (their keeper
+    #    cost round, or the nearest owned pick), marking those pick numbers.
+    keeper_at = {}     # pick_no -> {player, pos, adp, owner}
+    kept_ids, used = set(), set()
+    for o in MANAGERS:
+        rid = owner_to_roster.get(str(o))
+        owned = {}     # round -> [pick_no]
+        for (r, _slot), c in cells.items():
+            if c["owner_roster"] == rid:
+                owned.setdefault(r, []).append(c["pick_no"])
+        for k in sorted(team_keeper_rows(o), key=lambda x: (x.get("Cost Rd") or 99)):
+            kept_ids.add(str(k["_pid"]))
+            rd = int(k.get("Cost Rd") or rounds)
+            cand = [rd] + [rd - i for i in range(1, rd)] + [rd + i for i in range(1, rounds)]
+            spot = next((pn for cr in cand for pn in owned.get(cr, []) if pn not in used), None)
+            if spot is not None:
+                used.add(spot)
+                keeper_at[spot] = {"player": k["Player"], "pos": k["Pos"], "pid": str(k["_pid"]),
+                                   "adp": k.get("ADP"), "owner": config.manager_name(o)}
+
+    # 2) Available pool: ADP-ranked, keepers removed, league rookie premium applied.
+    name_idx, pool, seen = get_name_index(), [], set()
+    for _, ar in ADP_DF.iterrows():
+        pos, rank = ar.get("position"), ar.get("consensus_rank")
+        if pos not in ("QB", "RB", "WR", "TE") or pd.isna(rank):
+            continue
+        pid = name_idx.get(normalize_name(ar["name"]), "")
+        if not pid or str(pid) in kept_ids or str(pid) in seen:
+            continue
+        seen.add(str(pid))
+        rookie = _years_exp(pid) == 0
+        pool.append((float(rank) * (rookie_factor if rookie else 1.0), str(pid),
+                     ar["name"], pos, int(rank), rookie))
+    pool.sort(key=lambda x: x[0])
+
+    # 3) Walk the board in pick order; keeper cells = keepers, else next available.
+    rows, pi = [], 0
+    for (r, slot), c in sorted(cells.items(), key=lambda kv: kv[1]["pick_no"]):
+        pn = c["pick_no"]
+        base = {"Pick": pn, "Round": r, "Slot": slot, "Team": c["owner_name"]}
+        if pn in keeper_at:
+            k = keeper_at[pn]
+            rows.append({**base, "_pid": k["pid"], "Player": k["player"], "Pos": k["pos"],
+                         "ADP": k["adp"], "Rookie": False, "Keeper": True})
+        elif pi < len(pool):
+            _adj, pid, nm, pos, adp, rk = pool[pi]
+            pi += 1
+            rows.append({**base, "_pid": pid, "Player": nm, "Pos": pos,
+                         "ADP": adp, "Rookie": rk, "Keeper": False})
+    return pd.DataFrame(rows)
+
+
+def render_mock_draft() -> None:
+    st.markdown(f'<h2>{theme.crt("draft")}Projected Draft</h2>', unsafe_allow_html=True)
+    st.caption("A full projected board: each team's likely keepers (🔒, declared + "
+               "best by value) sit in their pick slots, and every other pick is the "
+               "best available by consensus ADP with our league's rookie premium.")
+    rf = config.mock_draft_rookie_factor()
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        rf = st.slider("Rookie premium (lower = rookies go higher)", 0.15, 1.0,
+                       value=float(rf), step=0.05,
+                       help="A rookie's draft rank = ADP rank × this. 1.0 = no premium.")
+    df = build_mock_draft(rf)
+    if df.empty:
+        st.info("No ADP data yet — run `python scripts/refresh_adp.py`.")
+        return
+    only_rd = c2.selectbox("Show round", ["First 3 rounds"] + [f"Round {r}" for r in range(1, DRAFT_ROUNDS + 1)])
+    if only_rd == "First 3 rounds":
+        view = df[df["Round"] <= 3]
+    else:
+        view = df[df["Round"] == int(only_rd.split()[1])]
+    rows = []
+    for _, r in view.iterrows():
+        keep = bool(r.get("Keeper"))
+        tag = (' <span class="kept-badge">🔒 KEEP</span>' if keep
+               else (' <span class="rk-badge">RK</span>' if r["Rookie"] else ""))
+        adp = "" if (keep or not r["ADP"]) else r["ADP"]
+        tr = ' style="background:rgba(255,206,31,.18);"' if keep else ""
+        rows.append(
+            f'<tr{tr}><td class="rk">{int(r["Round"])}.{int(r["Slot"]):02d}</td>'
+            f'<td class="pl">{theme.img_tag(r["_pid"])}{r["Player"]}{tag}</td>'
+            f'<td class="pos"><span class="posdot p-{r["Pos"]}"></span>{r["Pos"]}</td>'
+            f'<td>{r["Team"]}</td>'
+            f'<td class="num">{adp}</td></tr>'
+        )
+    head = '<tr><th>Pick</th><th>Player</th><th>Pos</th><th>On the clock</th><th>ADP</th></tr>'
+    st.markdown('<div class="neonwrap"><table class="lb lb-mock"><thead>' + head
+                + '</thead><tbody>' + "".join(rows) + '</tbody></table></div>',
+                unsafe_allow_html=True)
+    st.caption("🔒 = a kept player (occupies that pick) · everyone else = projected "
+               "pick by ADP. **RK** = rookie. Tune the rookie premium above to match "
+               "how your league really values rookies.")
+
+
 def _saved_slip(owner_id: str):
     """Read-only table of a manager's already-submitted keepers (or None)."""
     saved = manager_submitted(owner_id)
@@ -1810,10 +1915,12 @@ elif page == "keepers":
     with t3:
         render_roster_needs()
 elif page == "draft":
-    t1, t2 = st.tabs(["🃏 Draft Board", "💰 Draft Capital"])
+    t1, t2, t3 = st.tabs(["🃏 Draft Board", "🔮 Projected Draft", "💰 Draft Capital"])
     with t1:
         render_draft_board()
     with t2:
+        render_mock_draft()
+    with t3:
         render_draft_capital()
 elif page == "trades":
     t1, t2 = st.tabs(["🔁 Trade Market", "⚖️ Trade Analyzer"])
