@@ -1099,7 +1099,10 @@ def render_keeper_landscape() -> None:
 def render_adp_trends() -> None:
     st.markdown(f'<h2>{theme.crt("adp")}ADP Risers &amp; Fallers</h2>', unsafe_allow_html=True)
     win = st.selectbox("Window", [7, 14, 30], format_func=lambda d: f"Last {d} days", key="adp_win")
-    mv = adp_consensus.adp_movement(SEASON, window_days=win)
+    # getattr guard: a stale cached consensus module (Streamlit Cloud hot rerun)
+    # may not yet have adp_movement; treat as "no history yet" rather than crash.
+    _mv_fn = getattr(adp_consensus, "adp_movement", None)
+    mv = _mv_fn(SEASON, window_days=win) if _mv_fn else {"moves": []}
     if not mv.get("moves"):
         st.info("📈 Collecting ADP history — risers & fallers show up once there are "
                 "two daily snapshots. A snapshot is saved with each daily ADP refresh, "
@@ -1338,12 +1341,22 @@ def render_superlatives() -> None:
     st.markdown('<div class="kcards">' + "".join(cards) + "</div>", unsafe_allow_html=True)
 
 
+def _mock_rookie_factor() -> float:
+    """Read the rookie premium straight from config.load() (always present) rather
+    than a newer config.* function — so a stale cached config module on Streamlit
+    Cloud (which doesn't reload on a hot rerun) can't AttributeError here."""
+    try:
+        return float(config.load().get("mock_draft_rookie_factor", 0.4))
+    except (ValueError, TypeError):
+        return 0.4
+
+
 def build_mock_draft(rookie_factor: float | None = None) -> pd.DataFrame:
     """A full projected draft board: each team's likely KEEPERS occupy their pick
     slots, and every other pick is filled by the best available player (ADP with
     our league's rookie premium). Accounts for traded picks via the real board."""
     if rookie_factor is None:
-        rookie_factor = config.mock_draft_rookie_factor()
+        rookie_factor = _mock_rookie_factor()
     board = get_board()
     cells, rounds = board["cells"], board["rounds"]
     owner_to_roster = board["owner_to_roster"]
@@ -1405,7 +1418,7 @@ def render_mock_draft() -> None:
     st.caption("A full projected board: each team's likely keepers (🔒, declared + "
                "best by value) sit in their pick slots, and every other pick is the "
                "best available by consensus ADP with our league's rookie premium.")
-    rf = config.mock_draft_rookie_factor()
+    rf = _mock_rookie_factor()
     c1, c2 = st.columns([2, 1])
     with c1:
         rf = st.slider("Rookie premium (lower = rookies go higher)", 0.15, 1.0,
