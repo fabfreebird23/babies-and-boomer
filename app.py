@@ -27,9 +27,9 @@ MANAGERS = config.managers()  # owner_id -> {handle, name, team}
 NAME_TO_ID = {m["name"]: oid for oid, m in MANAGERS.items()}
 NT = int(LEAGUE["num_teams"])
 DRAFT_ROUNDS = int(LEAGUE["draft_rounds"])
-# Every draft pick lands on a player, so the realistic "draft pool" is this many
-# players by ADP — used to scope ADP risers/fallers to draftable players.
-DRAFT_SCOPE_RANK = NT * DRAFT_ROUNDS
+# Scope ADP risers/fallers + the Consensus ADP move view to the players actually
+# in range of being drafted — the top 100 by consensus ADP.
+DRAFT_SCOPE_RANK = 100
 MAX_REG = int(LEAGUE.get("max_regular_keepers", 3))
 MAX_ROOKIE = int(LEAGUE.get("max_rookie_keepers", 2))
 # How a rookie keeper costs when moved into a regular slot: "original_round"
