@@ -1108,11 +1108,17 @@ def render_adp_trends() -> None:
                 "two daily snapshots. A snapshot is saved with each daily ADP refresh, "
                 "so check back tomorrow.")
         return
-    st.caption(f"Consensus-ADP movement **{mv['prior']} → {mv['latest']}**. "
-               "▲ = climbing draft boards (being drafted earlier).")
-    moves = [m for m in mv["moves"] if abs(m["delta"]) >= 1]
-    risers = sorted(moves, key=lambda x: -x["delta"])[:15]
-    fallers = sorted(moves, key=lambda x: x["delta"])[:15]
+    st.caption(f"Consensus-ADP movement **{mv['prior']} → {mv['latest']}**, limited to "
+               "the **top 100** by ADP (the draftable pool). ▲ = climbing (drafted earlier).")
+    # Only players in (or recently in) the top 100 — deep-pool churn isn't relevant.
+    TOP_N = 100
+    moves = [m for m in mv["moves"]
+             if abs(m["delta"]) >= 1 and min(m["now"], m["was"]) <= TOP_N]
+    if not moves:
+        st.info("No top-100 ADP movement in this window yet.")
+        return
+    risers = [m for m in sorted(moves, key=lambda x: -x["delta"]) if m["delta"] > 0][:15]
+    fallers = [m for m in sorted(moves, key=lambda x: x["delta"]) if m["delta"] < 0][:15]
 
     def _tbl(data):
         body = []
@@ -1861,10 +1867,30 @@ def render_adp() -> None:
         view = view[view["name"].str.contains(q, case=False, na=False)]
     if pos:
         view = view[view["position"].isin(pos)]
-    view = view[["consensus_rank", "name", "position", "consensus_adp"]].rename(
-        columns={"consensus_rank": "Rank", "name": "Player",
-                 "position": "Pos", "consensus_adp": "Consensus ADP"})
-    st.dataframe(view, hide_index=True, use_container_width=True, height=600)
+    # Per-player ADP fluctuation (consensus-rank change over ~30 days; + = climbing).
+    _mv_fn = getattr(adp_consensus, "adp_movement", None)
+    mv = _mv_fn(SEASON, window_days=30) if _mv_fn else {"moves": []}
+    delta_by = {normalize_name(m["name"]): m["delta"] for m in mv.get("moves", [])}
+    cols = ["consensus_rank", "name", "position", "consensus_adp"]
+    if delta_by:
+        view = view.copy()
+        view["_adpdelta"] = view["name"].map(lambda n: delta_by.get(normalize_name(n)))
+        cols.append("_adpdelta")
+    out = view[cols].rename(columns={"consensus_rank": "Rank", "name": "Player",
+                                     "position": "Pos", "consensus_adp": "Consensus ADP",
+                                     "_adpdelta": "ADP Δ"})
+    cfg = None
+    if delta_by:
+        cfg = {"ADP Δ": st.column_config.NumberColumn(
+            "ADP Δ", format="%+d",
+            help="Consensus-rank change since the earlier snapshot — positive = climbing (drafted earlier).")}
+    st.dataframe(out, hide_index=True, use_container_width=True, height=600, column_config=cfg)
+    if delta_by:
+        st.caption(f"**ADP Δ** = consensus-rank change since **{mv['prior']}** — "
+                   "positive = climbing draft boards (being drafted earlier).")
+    else:
+        st.caption("An **ADP Δ** column appears here once there are 2+ daily ADP "
+                   "snapshots (one is saved with each daily refresh).")
 
 
 # ----------------------------------------------------------------- navigation
