@@ -1437,13 +1437,21 @@ def render_mock_draft() -> None:
     if df.empty:
         st.info("No ADP data yet — run `python scripts/refresh_adp.py`.")
         return
-    only_rd = c2.selectbox("Show round", ["First 3 rounds"] + [f"Round {r}" for r in range(1, DRAFT_ROUNDS + 1)])
-    if only_rd == "First 3 rounds":
+    only_rd = c2.selectbox("Show round", ["Full board (all rounds)", "First 3 rounds"]
+                           + [f"Round {r}" for r in range(1, DRAFT_ROUNDS + 1)])
+    if only_rd.startswith("Full board"):
+        view = df
+    elif only_rd == "First 3 rounds":
         view = df[df["Round"] <= 3]
     else:
         view = df[df["Round"] == int(only_rd.split()[1])]
     rows = []
+    multi_round = view["Round"].nunique() > 1
+    cur_round = None
     for _, r in view.iterrows():
+        if multi_round and int(r["Round"]) != cur_round:
+            cur_round = int(r["Round"])
+            rows.append(f'<tr class="rd-sep"><td colspan="5">Round {cur_round}</td></tr>')
         keep = bool(r.get("Keeper"))
         tag = (' <span class="kept-badge">🔒 KEEP</span>' if keep
                else (' <span class="rk-badge">RK</span>' if r["Rookie"] else ""))

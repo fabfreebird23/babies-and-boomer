@@ -151,6 +151,9 @@ table.lb tr.kept td:first-child{ box-shadow:inset 4px 0 0 var(--gold-d); }
   font-family:'Anton'; padding:1px 6px; text-transform:uppercase; letter-spacing:1px; margin-left:4px; }
 .lb .fa-tag{ color:var(--cyan); font-weight:600; font-size:12px; font-style:italic; }
 table.lb tr.fa td{ background:rgba(35,144,192,.08); }
+table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-family:'Anton';
+  letter-spacing:2px; text-transform:uppercase; font-size:12px; padding:5px 12px;
+  position:sticky; top:38px; z-index:4; }
 
 /* purple-duotone, gold-framed headshots (full colour on hover) */
 .hs{ width:32px; height:32px; border-radius:4px; object-fit:cover; vertical-align:middle;
