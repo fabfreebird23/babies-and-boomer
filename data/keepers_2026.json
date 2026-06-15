@@ -235,5 +235,52 @@
       "cost_choice": null,
       "cost_round": 14
     }
+  ],
+  "964873449275473920": [
+    {
+      "player_id": "8151",
+      "player_name": "Kenneth Walker",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": "Round 3",
+      "cost_round": 3
+    },
+    {
+      "player_id": "10229",
+      "player_name": "Rashee Rice",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 11
+    },
+    {
+      "player_id": "12512",
+      "player_name": "Quinshon Judkins",
+      "position": "RB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "11564",
+      "player_name": "Drake Maye",
+      "position": "QB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 14
+    },
+    {
+      "player_id": "12529",
+      "player_name": "TreVeyon Henderson",
+      "position": "RB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    }
   ]
 }
