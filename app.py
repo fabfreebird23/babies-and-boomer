@@ -392,7 +392,12 @@ def build_value_leaderboard(top_n: int = 50, hide_rookie_keepers: bool = False) 
                 continue
             prof = H.keeper_profile(owner_id, pid, SEASON)
             cost = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
-            from_rookie = (owner_id, str(pid)) in rookie_hist and not ever_regular_keeper(pid)
+            # Current rookie keeper = still rookie-eligible (drafted by this team as
+            # a rookie, held since, never converted to a regular). Using eligibility
+            # rather than just the prior-rookie history INCLUDES first-time rookie
+            # keepers (e.g. a 2nd-year stud kept for the first time) that were
+            # otherwise mis-costed as regular keepers and dropped from the board.
+            from_rookie = rookie_keeper_eligible(owner_id, str(pid))
             if from_rookie and hide_rookie_keepers:
                 continue
             if from_rookie:
@@ -539,20 +544,38 @@ def position_keeper_caps() -> dict:
             "TE": c.get("TE", 0) or 1}
 
 
-def _select_keepers(team_lb, cap, pos_cap, seed_positions=None):
-    """Pick a team's realistic keeper set: top by value, but no more than the
-    positional cap at QB/TE. Returns a list of leaderboard rows."""
+def _select_keepers(team_lb, cap, pos_cap, seed_positions=None,
+                    max_rookie=None, max_reg=None):
+    """Pick a team's realistic keeper set: top by value, but respecting the
+    league's keeper rules — at most `max_rookie` ROOKIE keepers and `max_reg`
+    REGULAR keepers (defaults to the league's MAX_ROOKIE / MAX_REG), and no more
+    than the positional cap at QB/TE. A rookie keeper is cheap (last-round cost),
+    so without the separate rookie cap a team would over-fill rookie slots and
+    starve its regular keepers. Returns a list of leaderboard rows."""
     from collections import Counter
+    if max_rookie is None:
+        max_rookie = MAX_ROOKIE
+    if max_reg is None:
+        max_reg = MAX_REG
     pcount = Counter(seed_positions or [])
-    chosen = []
+    chosen, n_rook, n_reg = [], 0, 0
     for _, r in team_lb.sort_values("Value", ascending=False).iterrows():
         if len(chosen) >= cap:
             break
+        is_rk = bool(r.get("Rookie"))
+        if is_rk and n_rook >= max_rookie:
+            continue  # rookie-keeper slots full
+        if not is_rk and n_reg >= max_reg:
+            continue  # regular-keeper slots full
         limit = pos_cap.get(r["Pos"])
         if limit is not None and pcount[r["Pos"]] >= limit:
             continue  # already keeping the max QBs/TEs
         chosen.append(r)
         pcount[r["Pos"]] += 1
+        if is_rk:
+            n_rook += 1
+        else:
+            n_reg += 1
     return chosen
 
 
@@ -594,11 +617,22 @@ def team_keeper_rows(owner_id) -> list:
     declared = manager_submitted(owner_id)
     seeded = [s.get("position") for s in declared]
     declared_ids = {str(s["player_id"]) for s in declared}
+    dec_rk = sum(1 for s in declared if s.get("is_rookie_keeper"))
+    dec_reg = len(declared) - dec_rk
+    # For a player a manager has DECLARED, trust the declared type — keeping a
+    # rookie-eligible player in a regular slot is a valid choice the value board's
+    # eligibility flag would otherwise override.
+    dec_type = {str(s["player_id"]): bool(s.get("is_rookie_keeper")) for s in declared}
     team = lb[lb["Team"] == config.manager_name(owner_id)]
-    out = list(team[team["_pid"].astype(str).isin(declared_ids)].to_dict("records"))
+    out = []
+    for r in team[team["_pid"].astype(str).isin(declared_ids)].to_dict("records"):
+        r["Rookie"] = dec_type.get(str(r["_pid"]), r.get("Rookie"))
+        out.append(r)
     cap = MAX_REG + MAX_ROOKIE
     rest = team[~team["_pid"].astype(str).isin(declared_ids)]
-    out += [dict(r) for r in _select_keepers(rest, cap - len(declared), position_keeper_caps(), seeded)]
+    out += [dict(r) for r in _select_keepers(
+        rest, cap - len(declared), position_keeper_caps(), seeded,
+        max_rookie=MAX_ROOKIE - dec_rk, max_reg=MAX_REG - dec_reg)]
     return out
 
 
