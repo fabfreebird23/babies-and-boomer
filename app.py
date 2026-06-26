@@ -153,6 +153,24 @@ def owned_for(owner_id: str):
     return get_owned().get(owner_id) if ENFORCE_OWNED else None
 
 
+def current_pick_slots():
+    """owner_id -> {round: [overall pick_no, ...]} for the CURRENT season, using
+    the real snake- and trade-aware draft slots from the board (so a 1.01 and a
+    1.03 are distinct picks with distinct values)."""
+    board = get_board()
+    r2o = {rid: o for o, rid in board["owner_to_roster"].items()}
+    out: dict = {}
+    for (rnd, _slot), c in board["cells"].items():
+        owner = r2o.get(c["owner_roster"])
+        if owner is None:
+            continue
+        out.setdefault(owner, {}).setdefault(rnd, []).append(c["pick_no"])
+    for rounds in out.values():
+        for nums in rounds.values():
+            nums.sort()
+    return out
+
+
 @st.cache_data(ttl=86400, show_spinner=False)
 def get_name_index():
     """normalized name -> Sleeper player_id (skill positions; prefer active/with team)."""
@@ -982,9 +1000,48 @@ def _draft_value(pos: int) -> int:
     return max(1, round(100 * (0.965 ** (max(1, pos) - 1))))
 
 
+def asset_value(rank: int, rookie: bool, rookie_factor: float | None = None) -> int:
+    """Trade value of an available draft asset. Veterans = talent by their ADP.
+    Rookies are worth MORE than their rookie-year ADP because a hit becomes a
+    near-free last-round keeper for their whole career — so we scale a rookie's
+    talent by the league's rookie premium (1/rookie_factor; at 0.4 that's ~2.5x).
+    This is why a stud rookie tops the board and the 1.01 is so valuable."""
+    base = _draft_value(rank)
+    if not rookie:
+        return base
+    rf = _mock_rookie_factor() if rookie_factor is None else rookie_factor
+    return max(1, round(base / max(0.15, rf)))
+
+
 def _pick_value(rnd: int) -> int:
     """Points for a draft pick in a given round (valued at a mid-round slot)."""
     return _draft_value((rnd - 1) * NT + NT // 2)
+
+
+def pick_market_values():
+    """Realistic value of each draft pick = the trade-asset value of the player
+    projected AVAILABLE at that slot once keepers are off the board — including the
+    rookie-keeper premium, so the 1.01 lands the top rookie (a career last-round
+    keeper) and is the most valuable pick, not an abstract '#1 overall'. A pick
+    occupied by a keeper in the projection is valued by the nearest open pick.
+    Returns (by_pick: {pick_no: pts}, by_round: {round: avg pts})."""
+    rf = _mock_rookie_factor()
+    mock = build_mock_draft()
+    by_pick = {}
+    for _, r in mock.iterrows():
+        rank = r.get("ADP")
+        if not bool(r.get("Keeper")) and rank is not None and not pd.isna(rank):
+            by_pick[int(r["Pick"])] = asset_value(int(rank), bool(r.get("Rookie")), rf)
+    valued = sorted(by_pick)
+    for _, r in mock.iterrows():
+        pn = int(r["Pick"])
+        if pn not in by_pick and valued:
+            by_pick[pn] = by_pick[min(valued, key=lambda p: abs(p - pn))]
+    by_round: dict = {}
+    for _, r in mock.iterrows():
+        by_round.setdefault(int(r["Round"]), []).append(by_pick.get(int(r["Pick"]), 1))
+    by_round = {rd: max(1, round(sum(v) / len(v))) for rd, v in by_round.items()}
+    return by_pick, by_round
 
 
 def render_trade_analyzer() -> None:
@@ -1017,23 +1074,42 @@ def render_trade_analyzer() -> None:
         return out
 
     pick_seasons = [SEASON, SEASON + 1, SEASON + 2]
+    cur_slots = current_pick_slots()
+    by_pick, by_round = pick_market_values()
 
-    def pick_opts(oid):
-        opts = []
+    def owned_picks(oid):
+        """[(label, points)] for every pick `oid` owns. Picks are valued by the
+        player projected AVAILABLE at that slot once keepers are off the board (so
+        the 1.01 is worth the best un-kept player, and a 1.03 differs from a 1.01).
+        This year uses the real snake/trade-aware slot ('2026 R1 (1.03)'); future
+        years use that round's average value, discounted ~20% per year out."""
+        items = []
         for yr in pick_seasons:
-            owned = get_owned_for(yr).get(oid) or {}
-            for r in range(1, DRAFT_ROUNDS + 1):
-                for i in range(owned.get(r, 0)):
-                    opts.append(f"{yr} R{r}" + (f" (#{i+1})" if owned.get(r, 0) > 1 else ""))
-        return opts
+            discount = 0.8 ** (yr - SEASON)
+            if yr == SEASON:
+                for rnd in sorted(cur_slots.get(oid, {})):
+                    for pick_no in cur_slots[oid][rnd]:
+                        pir = pick_no - (rnd - 1) * NT
+                        pts = by_pick.get(pick_no, by_round.get(rnd, 1))
+                        items.append((f"{yr} R{rnd} ({rnd}.{pir:02d})", pts * discount))
+            else:
+                owned = get_owned_for(yr).get(oid) or {}
+                for rnd in range(1, DRAFT_ROUNDS + 1):
+                    cnt = owned.get(rnd, 0)
+                    for i in range(cnt):
+                        label = f"{yr} R{rnd}" + (f" (#{i+1})" if cnt > 1 else "")
+                        items.append((label, by_round.get(rnd, _pick_value(rnd)) * discount))
+        return items
 
     ra, rb = roster_opts(oa), roster_opts(ob)
+    a_picks, b_picks = owned_picks(oa), owned_picks(ob)
+    a_pts_map, b_pts_map = dict(a_picks), dict(b_picks)
     with c1:
         a_pl = st.multiselect(f"{a} sends — players", list(ra.keys()), key="ta_apl")
-        a_pk = st.multiselect(f"{a} sends — picks", pick_opts(oa), key="ta_apk")
+        a_pk = st.multiselect(f"{a} sends — picks", [lbl for lbl, _ in a_picks], key="ta_apk")
     with c2:
         b_pl = st.multiselect(f"{b} sends — players", list(rb.keys()), key="ta_bpl")
-        b_pk = st.multiselect(f"{b} sends — picks", pick_opts(ob), key="ta_bpk")
+        b_pk = st.multiselect(f"{b} sends — picks", [lbl for lbl, _ in b_picks], key="ta_bpk")
 
     def player_value(pid):
         """Talent (by ADP draft position) + a bonus for any keeper bargain."""
@@ -1043,21 +1119,14 @@ def render_trade_analyzer() -> None:
         bonus = max(0, kv.get(pid, 0)) * 6   # cheap-keeper edge, on top of talent
         return talent + bonus
 
-    def pick_pts(label):
-        # "2027 R1 (#2)" -> discounted value (future picks worth less, slot unknown)
-        yr = int(label.split()[0])
-        rnd = int(label.split()[1][1:])
-        discount = 0.8 ** (yr - SEASON)
-        return _pick_value(rnd) * discount
-
-    def side_value(players, ropts, picks):
+    def side_value(players, ropts, picks, pts_map):
         pv = sum(player_value(ropts[p]) for p in players)
-        pc = sum(pick_pts(p) for p in picks)
+        pc = sum(pts_map.get(p, 0) for p in picks)
         return pv, pc
 
     # What each team RECEIVES (the other side's outgoing assets).
-    a_pv, a_pc = side_value(b_pl, rb, b_pk)   # A receives B's stuff
-    b_pv, b_pc = side_value(a_pl, ra, a_pk)   # B receives A's stuff
+    a_pv, a_pc = side_value(b_pl, rb, b_pk, b_pts_map)   # A receives B's stuff
+    b_pv, b_pc = side_value(a_pl, ra, a_pk, a_pts_map)   # B receives A's stuff
 
     if not (a_pl or a_pk or b_pl or b_pk):
         st.info("Pick players and/or picks for each side to grade the deal.")
@@ -1078,9 +1147,12 @@ def render_trade_analyzer() -> None:
         winner = a if diff > 0 else b
         st.success(f"📈 Edge to **{winner}** by ~{abs(round(diff))} pts.")
     st.caption("Heuristic only — player value = a draft-value curve at their ADP "
-               "plus a bonus for any keeper discount; picks use the same curve at a "
-               "mid-round slot. Future picks (next two years) are discounted ~20% "
-               "per year out. Doesn't model roster need or positional scarcity.")
+               "plus a bonus for any keeper discount. Picks are valued by the player "
+               "projected available at that slot once keepers are off the board, "
+               "including the rookie-keeper premium — so the 1.01 lands the top rookie "
+               "(a near-free last-round keeper for years) and is the most valuable pick, "
+               "and a 1.03 differs from a 1.01. Future-year picks use that round's "
+               "average value, discounted ~20% per year out. Doesn't model roster need.")
 
 
 def render_keeper_landscape() -> None:
