@@ -48,6 +48,24 @@
   ],
   "964725862010503168": [
     {
+      "player_id": "9493",
+      "player_name": "Puka Nacua",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 3,
+      "cost_choice": null,
+      "cost_round": 1
+    },
+    {
+      "player_id": "8130",
+      "player_name": "Trey McBride",
+      "position": "TE",
+      "is_rookie_keeper": false,
+      "keep_year": 3,
+      "cost_choice": null,
+      "cost_round": 3
+    },
+    {
       "player_id": "11632",
       "player_name": "Malik Nabers",
       "position": "WR",
