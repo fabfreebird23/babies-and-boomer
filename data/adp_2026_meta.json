@@ -1,16 +1,23 @@
 {
   "season": 2026,
   "scoring": "ppr",
-  "updated_utc": "2026-07-25T12:02:38Z",
+  "updated_utc": "2026-07-26T12:01:46Z",
   "sources": [
+    "CBS",
+    "DraftKings",
+    "Drafters",
     "ESPN",
-    "Sleeper"
+    "FootballGuys",
+    "MFL",
+    "NFFC",
+    "Sleeper",
+    "Underdog"
   ],
   "status": {
     "espn": "ok (400 rows)",
     "fantasypros": "FAILED: ValueError: FantasyPros: could not locate player column",
-    "footballguys": "FAILED: ConnectTimeout: HTTPSConnectionPool(host='www.footballguys.com', port=443): Max retries exceeded with url: /adp (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.footballguys.com', port=443) at 0x7f72b77a4290>, 'Connection to www.footballguys.com timed out. (connect timeout=25)'))",
-    "sleeper": "ok (301 rows)"
+    "footballguys": "ok (1860 rows)",
+    "sleeper": "ok (300 rows)"
   },
-  "players": 478
+  "players": 497
 }
