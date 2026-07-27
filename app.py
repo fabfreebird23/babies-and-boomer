@@ -261,7 +261,15 @@ def build_candidate_rows(owner_id: str) -> pd.DataFrame:
         inherits = (not from_rookie) and prof.get("acquired_via") in ("draft", "trade") and prof.get("original_round")
         no_pick = False
         if conv_anchor:
-            placed = engine.adjust_to_owned(conv_anchor, owned, DRAFT_ROUNDS)
+            # Cost like a Year-1 keeper anchored at the rookie draft round — but
+            # allow_adp_discount still applies, so if ADP is a later (cheaper)
+            # round than the rookie round, use that instead (matches the
+            # allocate_keeper_costs conversion path used when keepers are saved).
+            conv_prof = {**prof, "next_keep_year": 1, "consecutive_keeper_years": 0,
+                         "acquired_via": "draft", "original_round": conv_anchor}
+            conv_cost = engine.compute(conv_prof, adp_rank=rank, is_rookie_keeper=False)
+            target = conv_cost.recommended_round or conv_anchor
+            placed = engine.adjust_to_owned(target, owned, DRAFT_ROUNDS)
             if placed is None:
                 no_pick = True
                 reg_cost = "No pick to keep"
@@ -524,9 +532,18 @@ def build_trade_targets() -> pd.DataFrame:
                 # On a trade a rookie keeper converts to a regular keeper (the new
                 # owner didn't draft them as a rookie), costing the round they were
                 # originally drafted as a rookie — this league's conversion rule —
-                # with the 3-year clock starting at Year 1.
+                # with the 3-year clock starting at Year 1. allow_adp_discount still
+                # applies: a later (cheaper) ADP round wins over the rookie round.
                 rdr = rookie_draft_round(pid)
-                cost_round, keep_yr = (rdr if rdr else DRAFT_ROUNDS), 1
+                if rdr:
+                    prof = H.keeper_profile(owner_id, pid, SEASON)
+                    conv_prof = {**prof, "next_keep_year": 1, "consecutive_keeper_years": 0,
+                                 "acquired_via": "draft", "original_round": rdr}
+                    conv_cost = engine.compute(conv_prof, adp_rank=rank, is_rookie_keeper=False)
+                    cost_round = conv_cost.recommended_round or rdr
+                else:
+                    cost_round = DRAFT_ROUNDS
+                keep_yr = 1
             else:
                 prof = H.keeper_profile(owner_id, pid, SEASON)
                 cost = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
