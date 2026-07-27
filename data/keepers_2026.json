@@ -309,5 +309,52 @@
       "cost_choice": null,
       "cost_round": 15
     }
+  ],
+  "731597672364015616": [
+    {
+      "player_id": "9488",
+      "player_name": "Jaxon Smith-Njigba",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "4866",
+      "player_name": "Saquon Barkley",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 2,
+      "cost_choice": "Round 2",
+      "cost_round": 2
+    },
+    {
+      "player_id": "7543",
+      "player_name": "Travis Etienne",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 7
+    },
+    {
+      "player_id": "11628",
+      "player_name": "Marvin Harrison",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    },
+    {
+      "player_id": "8126",
+      "player_name": "Wan'Dale Robinson",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 14
+    }
   ]
 }
