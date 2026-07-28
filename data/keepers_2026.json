@@ -356,5 +356,52 @@
       "cost_choice": null,
       "cost_round": 14
     }
+  ],
+  "964746446002077696": [
+    {
+      "player_id": "9221",
+      "player_name": "Jahmyr Gibbs",
+      "position": "RB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "7588",
+      "player_name": "Javonte Williams",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 9
+    },
+    {
+      "player_id": "12518",
+      "player_name": "Tyler Warren",
+      "position": "TE",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    },
+    {
+      "player_id": "11584",
+      "player_name": "Bucky Irving",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 2,
+      "cost_choice": "Round 11",
+      "cost_round": 11
+    },
+    {
+      "player_id": "9484",
+      "player_name": "Tucker Kraft",
+      "position": "TE",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 12
+    }
   ]
 }
