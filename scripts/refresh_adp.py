@@ -20,7 +20,8 @@ def main() -> int:
     df = consensus.build(season, scoring)
     meta = consensus.load_meta(season)
     for k, v in meta.get("status", {}).items():
-        print(f"  {'OK ' if v.startswith('ok') else 'ERR'} {k}: {v}")
+        tag = "OK " if v.startswith("ok") else "OFF" if v == "disabled" else "ERR"
+        print(f"  {tag} {k}: {v}")
     print(f"Wrote {len(df)} players · sources: {', '.join(meta.get('sources', []))}")
     # Save a daily ADP snapshot so the Risers & Fallers (ADP Trends) tab has history.
     if not df.empty:
