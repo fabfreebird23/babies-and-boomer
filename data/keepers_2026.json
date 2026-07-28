@@ -403,5 +403,52 @@
       "cost_choice": null,
       "cost_round": 12
     }
+  ],
+  "964742545727098880": [
+    {
+      "player_id": "8146",
+      "player_name": "Garrett Wilson",
+      "position": "WR",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 16
+    },
+    {
+      "player_id": "8148",
+      "player_name": "Jameson Williams",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 2,
+      "cost_choice": "Round 7",
+      "cost_round": 7
+    },
+    {
+      "player_id": "11560",
+      "player_name": "Caleb Williams",
+      "position": "QB",
+      "is_rookie_keeper": true,
+      "keep_year": "Rookie",
+      "cost_choice": null,
+      "cost_round": 15
+    },
+    {
+      "player_id": "10222",
+      "player_name": "Jayden Reed",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 2,
+      "cost_choice": "Round 12",
+      "cost_round": 12
+    },
+    {
+      "player_id": "8205",
+      "player_name": "Isiah Pacheco",
+      "position": "RB",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": "Round 18",
+      "cost_round": 14
+    }
   ]
 }
