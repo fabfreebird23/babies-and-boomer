@@ -261,6 +261,15 @@
       "keep_year": 1,
       "cost_choice": null,
       "cost_round": 14
+    },
+    {
+      "player_id": "9754",
+      "player_name": "Quentin Johnston",
+      "position": "WR",
+      "is_rookie_keeper": false,
+      "keep_year": 1,
+      "cost_choice": null,
+      "cost_round": 13
     }
   ],
   "964873449275473920": [
