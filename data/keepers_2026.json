@@ -148,7 +148,7 @@
       "is_rookie_keeper": true,
       "keep_year": "Rookie",
       "cost_choice": null,
-      "cost_round": 16
+      "cost_round": 14
     },
     {
       "player_id": "8150",
@@ -166,7 +166,7 @@
       "is_rookie_keeper": true,
       "keep_year": "Rookie",
       "cost_choice": null,
-      "cost_round": 15
+      "cost_round": 13
     },
     {
       "player_id": "12519",
