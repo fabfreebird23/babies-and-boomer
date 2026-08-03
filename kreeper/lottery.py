@@ -20,7 +20,7 @@ from __future__ import annotations
 import random
 from typing import Any, Dict, List, Optional, Tuple
 
-from . import config, sleeper
+from . import config, sleeper, storage
 
 _DEFAULT_WEIGHTS = [640, 320, 160, 80, 40, 20, 8, 4, 2, 1]
 
@@ -41,6 +41,22 @@ def _roster_to_owner(league_id: str) -> Dict[int, str]:
     return {int(r["roster_id"]): str(r.get("owner_id")) for r in sleeper.get_rosters(league_id)}
 
 
+def _losers_bracket(league_id: str) -> List[dict]:
+    """Fetch via sleeper's pre-existing private _get/_disk helpers directly,
+    NOT sleeper.get_losers_bracket — that's a new public name on the existing
+    `sleeper` module, and Streamlit Cloud's hot redeploy doesn't reliably
+    reload new attributes onto an already-imported module (the same
+    AttributeError this sidesteps hit config.lottery_weights first). _get and
+    _disk predate this feature, so they're safe."""
+    try:
+        return sleeper._disk(  # noqa: SLF001
+            f"loser_bracket_{league_id}", 86400,
+            lambda: sleeper._get(f"league/{league_id}/losers_bracket") or [],  # noqa: SLF001
+        )
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def _placement_winner(bracket: List[dict], r2o: Dict[int, str]) -> Optional[str]:
     """owner_id of the p==1 (placement game) winner, or None if undecided/absent."""
     for m in bracket or []:
@@ -55,7 +71,7 @@ def season_is_complete(league_id: Optional[str] = None) -> bool:
     league_id = league_id or config.league()["sleeper_league_id"]
     r2o = _roster_to_owner(league_id)
     champ = _placement_winner(sleeper.get_winners_bracket(league_id), r2o)
-    chase = _placement_winner(sleeper.get_losers_bracket(league_id), r2o)
+    chase = _placement_winner(_losers_bracket(league_id), r2o)
     return champ is not None and chase is not None
 
 
@@ -77,7 +93,7 @@ def final_tiers(league_id: Optional[str] = None) -> Optional[Dict[str, dict]]:
     league_id = league_id or config.league()["sleeper_league_id"]
     r2o = _roster_to_owner(league_id)
     champ = _placement_winner(sleeper.get_winners_bracket(league_id), r2o)
-    chase = _placement_winner(sleeper.get_losers_bracket(league_id), r2o)
+    chase = _placement_winner(_losers_bracket(league_id), r2o)
     if champ is None or chase is None:
         return None
 
@@ -227,3 +243,90 @@ def live_projection(league_id: Optional[str] = None, playoff_teams: int = 4) -> 
     rows.sort(key=lambda r: -r["expected_weight"])
     return {"season": config.current_season(), "rows": rows,
             "playoff_teams": playoff_teams}
+
+
+# --------------------------------------------------------------- persistence
+# Reimplemented here rather than calling storage.load_lottery/save_lottery —
+# those are new public names on the existing `storage` module, same stale-
+# cached-module risk as sleeper.get_losers_bracket above. Built entirely on
+# storage's PRE-EXISTING private primitives (_gh_config/_headers/
+# _ensure_branch/_API, all present before this feature), which are safe.
+def _record_path(season: int) -> str:
+    return f"data/lottery_{season}.json"
+
+
+def _record_local_path(season: int):
+    import os
+    from pathlib import Path
+    base = Path(os.environ.get("KREEPER_DATA", config.DATA_DIR))
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"lottery_{season}.json"
+
+
+def load_record(season: Optional[int] = None) -> Dict[str, Any]:
+    """The persisted lottery record for the season whose results set the
+    weights. {} if nothing has been drawn yet."""
+    season = season or config.current_season()
+    if season == config.current_season() and storage._gh_config() is not None:  # noqa: SLF001
+        try:
+            tok, repo, branch = storage._gh_config()  # noqa: SLF001
+            r = storage.requests.get(
+                f"{storage._API}/repos/{repo}/contents/{_record_path(season)}",  # noqa: SLF001
+                headers=storage._headers(tok), params={"ref": branch}, timeout=15,  # noqa: SLF001
+            )
+            if r.status_code == 404:
+                return {}
+            r.raise_for_status()
+            import base64 as _b64
+            import json as _json
+            content = _b64.b64decode(r.json()["content"]).decode()
+            return _json.loads(content) if content.strip() else {}
+        except Exception:  # noqa: BLE001
+            pass
+    p = _record_local_path(season)
+    if not p.exists():
+        return {}
+    try:
+        import json as _json
+        return _json.loads(p.read_text())
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def save_record(data: Dict[str, Any], season: Optional[int] = None) -> None:
+    season = season or config.current_season()
+    if season == config.current_season() and storage._gh_config() is not None:  # noqa: SLF001
+        import base64 as _b64
+        import json as _json
+        tok, repo, branch = storage._gh_config()  # noqa: SLF001
+        storage._ensure_branch(repo, branch, tok)  # noqa: SLF001
+        path = _record_path(season)
+        for _ in range(3):  # retry on a concurrent-write SHA conflict
+            sha = None
+            r = storage.requests.get(
+                f"{storage._API}/repos/{repo}/contents/{path}",  # noqa: SLF001
+                headers=storage._headers(tok), params={"ref": branch}, timeout=15,  # noqa: SLF001
+            )
+            if r.status_code == 200:
+                sha = r.json()["sha"]
+            body = {
+                "message": f"lottery: {season} draft-order lottery",
+                "content": _b64.b64encode(_json.dumps(data, indent=2).encode()).decode(),
+                "branch": branch,
+            }
+            if sha:
+                body["sha"] = sha
+            put = storage.requests.put(
+                f"{storage._API}/repos/{repo}/contents/{path}",  # noqa: SLF001
+                headers=storage._headers(tok), json=body, timeout=20,  # noqa: SLF001
+            )
+            if put.status_code in (200, 201):
+                return
+            if put.status_code != 409:
+                put.raise_for_status()
+        raise RuntimeError("GitHub save failed after retries")
+    import json as _json
+    p = _record_local_path(season)
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(_json.dumps(data, indent=2))
+    tmp.replace(p)

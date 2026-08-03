@@ -88,7 +88,7 @@ def _rosters():
 def test_final_tiers_assigns_highest_weight_to_chase_winner_and_lowest_to_champion():
     with patch.object(lottery.sleeper, "get_rosters", return_value=_rosters()), \
          patch.object(lottery.sleeper, "get_winners_bracket", return_value=_bracket(1, 2)), \
-         patch.object(lottery.sleeper, "get_losers_bracket", return_value=_bracket(3, 4)), \
+         patch.object(lottery, "_losers_bracket", return_value=_bracket(3, 4)), \
          patch.object(lottery, "_weights", return_value=[640, 320, 160, 80]):
         tiers = lottery.final_tiers("fake_league")
 
@@ -104,17 +104,17 @@ def test_final_tiers_assigns_highest_weight_to_chase_winner_and_lowest_to_champi
 def test_final_tiers_none_when_brackets_are_undecided():
     with patch.object(lottery.sleeper, "get_rosters", return_value=_rosters()), \
          patch.object(lottery.sleeper, "get_winners_bracket", return_value=[]), \
-         patch.object(lottery.sleeper, "get_losers_bracket", return_value=[]):
+         patch.object(lottery, "_losers_bracket", return_value=[]):
         assert lottery.final_tiers("fake_league") is None
 
 
 def test_season_is_complete_requires_both_brackets_decided():
     with patch.object(lottery.sleeper, "get_rosters", return_value=_rosters()), \
          patch.object(lottery.sleeper, "get_winners_bracket", return_value=_bracket(1, 2)), \
-         patch.object(lottery.sleeper, "get_losers_bracket", return_value=[]):
+         patch.object(lottery, "_losers_bracket", return_value=[]):
         assert lottery.season_is_complete("fake_league") is False
 
     with patch.object(lottery.sleeper, "get_rosters", return_value=_rosters()), \
          patch.object(lottery.sleeper, "get_winners_bracket", return_value=_bracket(1, 2)), \
-         patch.object(lottery.sleeper, "get_losers_bracket", return_value=_bracket(3, 4)):
+         patch.object(lottery, "_losers_bracket", return_value=_bracket(3, 4)):
         assert lottery.season_is_complete("fake_league") is True

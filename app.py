@@ -1410,7 +1410,7 @@ def _render_lottery_conduct() -> None:
                 unsafe_allow_html=True)
 
     st.markdown("##### 🎲 Conduct the lottery")
-    record = storage.load_lottery(SEASON)
+    record = lottery.load_record(SEASON)
     draw = record.get("draw_order")
 
     if not draw:
@@ -1420,7 +1420,7 @@ def _render_lottery_conduct() -> None:
             drawn = lottery.draw_order(weights)
             record = {"season": SEASON, "weights": weights, "tiers": tiers,
                       "draw_order": drawn, "slot_picks": {}}
-            storage.save_lottery(record, SEASON)
+            lottery.save_record(record, SEASON)
             st.rerun()
         return
 
@@ -1453,7 +1453,7 @@ def _render_lottery_conduct() -> None:
         if c2.button("Confirm", key=f"lottery_confirm_{o}"):
             picks[o] = choice
             record["slot_picks"] = picks
-            storage.save_lottery(record, SEASON)
+            lottery.save_record(record, SEASON)
             st.rerun()
         break
 
@@ -1469,7 +1469,7 @@ def _render_lottery_conduct() -> None:
                     + final_rows + '</tbody></table></div>', unsafe_allow_html=True)
 
     if st.button("↺ Reset the lottery (redo)", help="Clears the draw and any slot picks made so far."):
-        storage.save_lottery({}, SEASON)
+        lottery.save_record({}, SEASON)
         st.rerun()
 
 
