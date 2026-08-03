@@ -22,6 +22,20 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from . import config, sleeper
 
+_DEFAULT_WEIGHTS = [640, 320, 160, 80, 40, 20, 8, 4, 2, 1]
+
+
+def _weights() -> List[int]:
+    """Read straight from config.load() rather than config.lottery_weights() —
+    both this module and that function were added in the same deploy, and a
+    stale cached `kreeper.config` module on Streamlit Cloud (which doesn't
+    always reload on a hot rerun) can AttributeError on the newer name."""
+    try:
+        w = config.load().get("lottery", {}).get("weights")
+        return [int(x) for x in w] if w else list(_DEFAULT_WEIGHTS)
+    except (ValueError, TypeError):
+        return list(_DEFAULT_WEIGHTS)
+
 
 def _roster_to_owner(league_id: str) -> Dict[int, str]:
     return {int(r["roster_id"]): str(r.get("owner_id")) for r in sleeper.get_rosters(league_id)}
@@ -67,7 +81,7 @@ def final_tiers(league_id: Optional[str] = None) -> Optional[Dict[str, dict]]:
     if champ is None or chase is None:
         return None
 
-    weights = config.lottery_weights()
+    weights = _weights()
     standings = _standings(league_id)
     rest = [row for row in standings if row[0] not in (champ, chase)]
     rest.sort(key=lambda row: (row[1], row[3]))  # worst first: fewest wins, then fewest points
@@ -183,7 +197,7 @@ def live_projection(league_id: Optional[str] = None, playoff_teams: int = 4) -> 
     champ_probs = _group_win_probs(top)
     chase_probs = _group_win_probs(mid)
 
-    weights = config.lottery_weights()
+    weights = _weights()
     # If a team doesn't win its own bracket, it lands in the standings tier —
     # at a rank we can't know yet (that depends on who else avoids winning
     # their bracket too). As a clearly-approximate stand-in, use the weight

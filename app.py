@@ -1303,8 +1303,22 @@ def render_draft_capital() -> None:
                "rebuild; sold future/early picks or thin on this year's picks → win-now.")
 
 
+_DEFAULT_LOTTERY_WEIGHTS = [640, 320, 160, 80, 40, 20, 8, 4, 2, 1]
+
+
+def _lottery_weights() -> list:
+    """Read straight from config.load() (always present) rather than a newer
+    config.* function — so a stale cached config module on Streamlit Cloud
+    (which doesn't reload on a hot rerun) can't AttributeError here."""
+    try:
+        w = config.load().get("lottery", {}).get("weights")
+        return [int(x) for x in w] if w else list(_DEFAULT_LOTTERY_WEIGHTS)
+    except (ValueError, TypeError):
+        return list(_DEFAULT_LOTTERY_WEIGHTS)
+
+
 def _lottery_rules_caption() -> str:
-    w = config.lottery_weights()
+    w = _lottery_weights()
     return (f"**{SEASON}'s results set the {SEASON+1} draft lottery.** \"Chase for the Pick\" "
             f"winner (the consolation bracket's champion) gets the most balls ({w[0]}); the "
             f"league champion gets the fewest ({w[-1]}); the remaining 8 teams are seeded by "
