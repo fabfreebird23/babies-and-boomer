@@ -81,6 +81,12 @@ def get_winners_bracket(league_id: str) -> List[Dict[str, Any]]:
     return _disk(f"bracket_{league_id}", 86400, lambda: _get(f"league/{league_id}/winners_bracket") or [])
 
 
+def get_losers_bracket(league_id: str) -> List[Dict[str, Any]]:
+    """The consolation bracket (seeds below the playoff cutoff). This league's
+    "Chase for the Pick" is this bracket's placement-1 (p==1) winner."""
+    return _disk(f"loser_bracket_{league_id}", 86400, lambda: _get(f"league/{league_id}/losers_bracket") or [])
+
+
 def league_chain(league_id: str) -> List[Dict[str, Any]]:
     """Walk previous_league_id back to the start.
 

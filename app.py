@@ -1303,6 +1303,162 @@ def render_draft_capital() -> None:
                "rebuild; sold future/early picks or thin on this year's picks → win-now.")
 
 
+def _lottery_rules_caption() -> str:
+    w = config.lottery_weights()
+    return (f"**{SEASON}'s results set the {SEASON+1} draft lottery.** \"Chase for the Pick\" "
+            f"winner (the consolation bracket's champion) gets the most balls ({w[0]}); the "
+            f"league champion gets the fewest ({w[-1]}); the remaining 8 teams are seeded by "
+            f"regular-season record, worst to best, at {', '.join(str(x) for x in w[1:-1])} "
+            "balls. The draw sets a **selection order** — 1st choice picks any draft slot they "
+            "want, 2nd choice picks from what's left, and so on — not a slot directly.")
+
+
+def render_lottery() -> None:
+    from kreeper import lottery
+    st.markdown(f'<h2>{theme.crt("top")}{SEASON+1} Draft Lottery</h2>', unsafe_allow_html=True)
+    st.caption(_lottery_rules_caption())
+
+    complete = lottery.season_is_complete()
+    if not complete:
+        _render_lottery_live_projection()
+    else:
+        _render_lottery_conduct()
+
+
+def _render_lottery_live_projection() -> None:
+    from kreeper import lottery
+    proj = lottery.live_projection()
+    if not any(r["wins"] + r["losses"] for r in proj["rows"]):
+        st.info(f"The {SEASON} season hasn't started yet — nothing to project. Once games are "
+                "played this fills in with live odds, updating as standings move.")
+        return
+    st.caption("⏳ **Live projection** — the season isn't over, so this is an estimate: seeds "
+               "the top/next groups by CURRENT record, then models each bracket's winner by "
+               "this season's win% and points scored. Updates as records change; the real "
+               "weights lock in once both brackets finish.")
+    rows = []
+    for r in proj["rows"]:
+        rows.append(
+            f'<tr><td class="rk">{r["current_rank"]}</td>'
+            f'<td class="pl">{config.manager_name(r["owner"])}</td>'
+            f'<td class="num">{r["wins"]}-{r["losses"]}</td>'
+            f'<td class="num">{r["pf"]}</td>'
+            f'<td class="num">{r["p_champion"]*100:.0f}%</td>'
+            f'<td class="num">{r["p_chase_winner"]*100:.0f}%</td>'
+            f'<td class="num" style="font-weight:700;">{r["expected_weight"]:g}</td></tr>'
+        )
+    head = ('<tr><th>Rk</th><th>Team</th><th>Record</th><th>PF</th>'
+            '<th>P(Champ)</th><th>P(Chase)</th><th>Proj.&nbsp;Balls</th></tr>')
+    st.markdown('<div class="neonwrap"><table class="lb"><thead>' + head
+                + '</thead><tbody>' + "".join(rows) + '</tbody></table></div>',
+                unsafe_allow_html=True)
+    st.caption("Proj. Balls = a blended expected weight (P(champ)×lowest + P(chase)×highest + "
+               "P(neither)×the standings-tier weight at your current rank). For sorting/vibes "
+               "only — the real draw only uses the final, locked weights below once the season ends.")
+
+
+def _render_lottery_conduct() -> None:
+    from kreeper import lottery
+    tiers = lottery.final_tiers()
+    if not tiers:
+        st.error("Season shows complete but tiers couldn't be computed — check the winners/"
+                 "losers bracket on Sleeper.")
+        return
+
+    st.markdown("##### 🎟️ Final ball weights")
+    rows = "".join(
+        f'<tr><td class="rk">{info["rank"]}</td>'
+        f'<td class="pl">{config.manager_name(o)}</td>'
+        f'<td>{info["tier"]}</td>'
+        f'<td class="num" style="font-weight:700;">{info["weight"]}</td></tr>'
+        for o, info in sorted(tiers.items(), key=lambda kv: kv[1]["rank"])
+    )
+    total = sum(t["weight"] for t in tiers.values())
+    st.markdown('<div class="neonwrap"><table class="lb"><thead>'
+                '<tr><th>#</th><th>Team</th><th>Tier</th><th>Balls</th></tr></thead><tbody>'
+                + rows + f'</tbody></table></div>', unsafe_allow_html=True)
+    st.caption(f"{total} balls total. Odds below are each team's exact chance at each "
+               "selection position (1st choice through last).")
+
+    weights = {o: info["weight"] for o, info in tiers.items()}
+    probs = lottery.position_probabilities(weights)
+    order_by_weight = sorted(tiers, key=lambda o: -tiers[o]["weight"])
+    n = len(order_by_weight)
+    head = '<tr><th>Team</th>' + "".join(f'<th>{i+1}{"st" if i==0 else "nd" if i==1 else "rd" if i==2 else "th"}</th>' for i in range(n)) + '</tr>'
+    body = "".join(
+        f'<tr><td class="pl">{config.manager_name(o)}</td>'
+        + "".join(f'<td class="num">{probs[o][i]*100:.1f}%</td>' for i in range(n))
+        + '</tr>'
+        for o in order_by_weight
+    )
+    st.markdown('<div class="neonwrap" style="overflow-x:auto;"><table class="lb" style="font-size:12px;">'
+                '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>',
+                unsafe_allow_html=True)
+
+    st.markdown("##### 🎲 Conduct the lottery")
+    record = storage.load_lottery(SEASON)
+    draw = record.get("draw_order")
+
+    if not draw:
+        st.caption("Nobody's run the draw yet. This is a single random weighted pick without "
+                   "replacement, live — refresh-proof once it's run (saved immediately).")
+        if st.button("🎲 Run the lottery", type="primary"):
+            drawn = lottery.draw_order(weights)
+            record = {"season": SEASON, "weights": weights, "tiers": tiers,
+                      "draw_order": drawn, "slot_picks": {}}
+            storage.save_lottery(record, SEASON)
+            st.rerun()
+        return
+
+    st.success("The lottery has been run — this order is locked in.")
+    st.markdown("###### Selection order (1st choice → last)")
+    rev = "".join(
+        f'<div class="kcard"><h4>#{i+1} — {config.manager_name(o)}</h4>'
+        f'<p>{tiers.get(o, {}).get("tier", "")} · {weights.get(o, "?")} balls</p></div>'
+        for i, o in enumerate(draw)
+    )
+    st.markdown(f'<div class="kcards">{rev}</div>', unsafe_allow_html=True)
+
+    st.markdown("###### Pick your slot")
+    st.caption("In the order above, each team picks their actual draft slot from what's left. "
+               "Once all 10 are in, carry this order into next season's `config.yaml` "
+               "`draft_order` when the new season starts.")
+    picks: dict = dict(record.get("slot_picks", {}))
+    taken_slots = set(picks.values())
+    for i, o in enumerate(draw):
+        name = config.manager_name(o)
+        if o in picks:
+            st.markdown(f"**#{i+1}. {name}** → Draft Slot **{picks[o]}** ✅")
+            continue
+        if i > 0 and draw[i-1] not in picks:
+            st.markdown(f"#{i+1}. {name} — waiting on the picks ahead.")
+            break
+        avail = [s for s in range(1, len(draw) + 1) if s not in taken_slots]
+        c1, c2 = st.columns([3, 1])
+        choice = c1.selectbox(f"#{i+1}. {name} picks their slot", avail, key=f"lottery_slot_{o}")
+        if c2.button("Confirm", key=f"lottery_confirm_{o}"):
+            picks[o] = choice
+            record["slot_picks"] = picks
+            storage.save_lottery(record, SEASON)
+            st.rerun()
+        break
+
+    if len(picks) == len(draw):
+        st.balloons()
+        st.markdown("###### Final draft order")
+        final_rows = "".join(
+            f'<tr><td class="rk">{slot}</td><td class="pl">{config.manager_name(o)}</td></tr>'
+            for o, slot in sorted(picks.items(), key=lambda kv: kv[1])
+        )
+        st.markdown('<div class="neonwrap"><table class="lb"><thead>'
+                    '<tr><th>Slot</th><th>Team</th></tr></thead><tbody>'
+                    + final_rows + '</tbody></table></div>', unsafe_allow_html=True)
+
+    if st.button("↺ Reset the lottery (redo)", help="Clears the draw and any slot picks made so far."):
+        storage.save_lottery({}, SEASON)
+        st.rerun()
+
+
 def render_roster_needs() -> None:
     st.markdown(f'<h2>{theme.crt("board")}Roster Needs</h2>', unsafe_allow_html=True)
     st.caption("After likely keepers, the starting spots each team still has to draft. "
@@ -2089,13 +2245,15 @@ elif page == "keepers":
     with t3:
         render_roster_needs()
 elif page == "draft":
-    t1, t2, t3 = st.tabs(["🃏 Draft Board", "🔮 Projected Draft", "💰 Draft Capital"])
+    t1, t2, t3, t4 = st.tabs(["🃏 Draft Board", "🔮 Projected Draft", "💰 Draft Capital", "🎟️ Lottery"])
     with t1:
         render_draft_board()
     with t2:
         render_mock_draft()
     with t3:
         render_draft_capital()
+    with t4:
+        render_lottery()
 elif page == "trades":
     t1, t2 = st.tabs(["🔁 Trade Market", "⚖️ Trade Analyzer"])
     with t1:

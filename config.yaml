@@ -59,6 +59,16 @@ rules:
 # (lower = rookies get drafted earlier). 1.0 = no premium.
 mock_draft_rookie_factor: 0.4
 
+# Next season's draft-order lottery. Ball weights, most to least, assigned to
+# 10 tiers in this order:
+#   1. "Chase for the Pick" winner — the consolation bracket's (Sleeper
+#      losers_bracket) placement-1 winner. Highest weight.
+#   2-9. The remaining 8 teams (everyone except the two below), by THIS
+#      season's regular-season record, worst to best.
+#   10. The league champion (winners_bracket placement-1 winner). Lowest weight.
+lottery:
+  weights: [640, 320, 160, 80, 40, 20, 8, 4, 2, 1]
+
 # Managers — Sleeper user_id -> display info. `name` is the friendly name shown in the app.
 managers:
   "599073863350927360": { handle: ScrambledWaffles, name: "Jordan Keller",    team: "Rome Wasnt Built InOdunze" }

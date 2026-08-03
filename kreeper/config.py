@@ -58,6 +58,15 @@ def mock_draft_rookie_factor() -> float:
         return 0.4
 
 
+def lottery_weights() -> list:
+    default = [640, 320, 160, 80, 40, 20, 8, 4, 2, 1]
+    try:
+        w = load().get("lottery", {}).get("weights")
+        return [int(x) for x in w] if w else default
+    except (ValueError, TypeError):
+        return default
+
+
 def keeper_timezone_name() -> str:
     return str(league().get("keeper_timezone") or "America/Indiana/Indianapolis")
 

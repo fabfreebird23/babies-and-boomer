@@ -257,6 +257,86 @@ def load_log(season: int | None = None) -> List[Dict[str, Any]]:
         return []
 
 
+# --------------------------------------------------------------- lottery
+def _lottery_gh_path(season: int) -> str:
+    return f"data/lottery_{season}.json"
+
+
+def _lottery_local_path(season: int) -> Path:
+    base = Path(os.environ.get("KREEPER_DATA", config.DATA_DIR))
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"lottery_{season}.json"
+
+
+def load_lottery(season: int | None = None) -> Dict[str, Any]:
+    """The persisted lottery record for the season whose results set the
+    weights (e.g. season=2026 -> next season's, 2027, draft order). {} if the
+    lottery for that season hasn't been drawn yet."""
+    season = season or config.current_season()
+    if _use_remote(season):
+        try:
+            data, _ = _gh_get_json(_lottery_gh_path(season))
+            return data
+        except Exception:  # noqa: BLE001
+            pass
+    p = _lottery_local_path(season)
+    if not p.exists():
+        return {}
+    try:
+        with _LOCK:
+            return json.loads(p.read_text())
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def save_lottery(data: Dict[str, Any], season: int | None = None) -> None:
+    """Replace the whole lottery record for a season (weights, draw order,
+    slot picks as they're made)."""
+    season = season or config.current_season()
+    if _use_remote(season):
+        _gh_save_json(_lottery_gh_path(season), data,
+                      message=f"lottery: {season} draft-order lottery")
+        return
+    p = _lottery_local_path(season)
+    with _LOCK:
+        tmp = p.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(p)
+
+
+def _gh_get_json(path: str) -> Tuple[Dict[str, Any], Optional[str]]:
+    tok, repo, branch = _gh_config()
+    r = requests.get(f"{_API}/repos/{repo}/contents/{path}",
+                     headers=_headers(tok), params={"ref": branch}, timeout=15)
+    if r.status_code == 404:
+        return {}, None
+    r.raise_for_status()
+    j = r.json()
+    content = base64.b64decode(j["content"]).decode()
+    return (json.loads(content) if content.strip() else {}), j["sha"]
+
+
+def _gh_save_json(path: str, data: Dict[str, Any], message: str) -> None:
+    tok, repo, branch = _gh_config()
+    _ensure_branch(repo, branch, tok)
+    for _ in range(3):  # retry on a concurrent-write SHA conflict
+        _, sha = _gh_get_json(path)
+        body = {
+            "message": message,
+            "content": base64.b64encode(json.dumps(data, indent=2).encode()).decode(),
+            "branch": branch,
+        }
+        if sha:
+            body["sha"] = sha
+        r = requests.put(f"{_API}/repos/{repo}/contents/{path}",
+                         headers=_headers(tok), json=body, timeout=20)
+        if r.status_code in (200, 201):
+            return
+        if r.status_code != 409:  # not a SHA conflict -> give up
+            r.raise_for_status()
+    raise RuntimeError("GitHub save failed after retries")
+
+
 def prior_rookie_seasons(
     owner_id: str, player_id: str, current_season: int, lookback: int = 6
 ) -> List[int]:
