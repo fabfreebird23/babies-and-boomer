@@ -1718,7 +1718,8 @@ def render_my_keepers() -> None:
         })
 
     costs = engine.allocate_keeper_costs(items, draft_rounds=DRAFT_ROUNDS,
-                                         owned=owned_for(owner_id))
+                                         owned=owned_for(owner_id),
+                                         rookie_owned=get_owned().get(owner_id))
     reg_items = [i for i in items if not i["is_rookie"]]
     rook_items = [i for i in items if i["is_rookie"]]
 

@@ -224,6 +224,7 @@ def allocate_keeper_costs(
     num_teams: Optional[int] = None,
     rules: Optional[Dict[str, Any]] = None,
     owned=None,
+    rookie_owned=None,
 ) -> Dict[str, KeeperCost]:
     """Compute every keeper's cost for one manager, handling round allocation.
 
@@ -231,6 +232,14 @@ def allocate_keeper_costs(
     target round (traded it away), the keeper slots at their next-highest owned
     pick (e.g. a kept-at-R7 player when R7 was traded -> R6). `owned` is a Counter
     of {round: picks owned}; default = one pick per round.
+
+    `rookie_owned` is the Counter used for "last owned rounds" placement (rookie
+    keepers and undrafted/waiver last-round slots) — it's ALWAYS the team's real,
+    trade-aware picks (regardless of the `enforce_owned_picks` config toggle,
+    which only relaxes cost validation for drafted/regular keepers). A rookie
+    keeper physically occupies a real draft-board pick, so if a team traded away
+    its 15th and 16th, their last two rookie keepers land at the 14th and 13th,
+    not an abstract round nobody owns. Defaults to `owned` when not given.
 
     Order: rookie keepers claim the last owned rounds, then drafted keepers take
     (or bump to) their owned round, then undrafted/waiver pickups take the latest
@@ -241,15 +250,18 @@ def allocate_keeper_costs(
     draft_rounds = draft_rounds or int(config.league()["draft_rounds"])
     if owned is None:
         owned = Counter({r: 1 for r in range(1, draft_rounds + 1)})
+    if rookie_owned is None:
+        rookie_owned = owned
     consumed: Counter = Counter()
+    rookie_consumed: Counter = Counter()
 
     def _avail(r: int) -> bool:
         return owned.get(r, 0) - consumed.get(r, 0) > 0
 
     def take_bottom() -> Optional[int]:
         for r in range(draft_rounds, 0, -1):
-            if _avail(r):
-                consumed[r] += 1
+            if rookie_owned.get(r, 0) - rookie_consumed.get(r, 0) > 0:
+                rookie_consumed[r] += 1
                 return r
         return None
 
