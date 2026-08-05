@@ -186,7 +186,7 @@ table.dboard td.dbcell{ padding:3px 4px; }
 /* fixed bottom pill nav — replaces the old static top bar. Leave room at
    the foot of the page so content never sits under it. */
 [data-testid="stAppViewContainer"] .block-container{ padding-bottom:92px !important; }
-.bottom-bar-wrap{ position:fixed; left:0; right:0; bottom:16px; display:flex;
+.bottom-bar-wrap{ position:fixed; left:0; right:0; bottom:max(16px, env(safe-area-inset-bottom)); display:flex;
   justify-content:center; z-index:1000; pointer-events:none; }
 .bottom-bar{ pointer-events:auto; display:flex; align-items:center; gap:2px;
   background:rgba(255,255,255,.97); backdrop-filter:blur(10px);
@@ -389,7 +389,7 @@ details.dc-row summary:hover{ background:rgba(255,206,31,.08); }
   .neon-logo{ font-size:40px !important; -webkit-text-stroke-width:2px; }
   .neon-tag{ font-size:8px; letter-spacing:4px; }
   [data-testid="stAppViewContainer"] .block-container{ padding-bottom:84px !important; }
-  .bottom-bar-wrap{ bottom:10px; }
+  .bottom-bar-wrap{ bottom:max(10px, env(safe-area-inset-bottom)); }
   .bottom-bar{ gap:0; padding:4px; }
   .navlink{ font-size:10px; padding:8px 11px !important; letter-spacing:.3px; }
   .bb-pop{ bottom:68px; }
