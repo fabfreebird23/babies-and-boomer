@@ -728,14 +728,16 @@ def starter_slots() -> list:
 
 
 def team_keeper_rows(owner_id) -> list:
-    """The keeper set a team would likely carry (declared + best by value, with
-    positional caps). Returns leaderboard rows."""
+    """A team's keeper set. Once submissions are locked, this is exactly
+    what's declared — no filling remaining slots with a value-based guess,
+    since there's nothing left to decide. Before the deadline it's declared
+    + best-by-value fill, so the site can preview a likely keeper set while
+    picks are still open."""
     lb = build_value_leaderboard(400)
     declared = manager_submitted(owner_id)
     seeded = [s.get("position") for s in declared]
     declared_ids = {str(s["player_id"]) for s in declared}
     dec_rk = sum(1 for s in declared if s.get("is_rookie_keeper"))
-    dec_reg = len(declared) - dec_rk
     # For a player a manager has DECLARED, trust the declared type — keeping a
     # rookie-eligible player in a regular slot is a valid choice the value board's
     # eligibility flag would otherwise override.
@@ -745,6 +747,12 @@ def team_keeper_rows(owner_id) -> list:
     for r in team[team["_pid"].astype(str).isin(declared_ids)].to_dict("records"):
         r["Rookie"] = dec_type.get(str(r["_pid"]), r.get("Rookie"))
         out.append(r)
+
+    _, locked = keeper_lock()
+    if locked:
+        return out
+
+    dec_reg = len(declared) - dec_rk
     cap = MAX_REG + MAX_ROOKIE
     rest = team[~team["_pid"].astype(str).isin(declared_ids)]
     out += [dict(r) for r in _select_keepers(
@@ -1467,9 +1475,11 @@ def render_adp_trends() -> None:
 def render_draft_capital() -> None:
     st.markdown('<h2 class="two-tone">Draft <span class="g">Capital</span> &amp; Keeper Cost</h2>',
                 unsafe_allow_html=True)
+    _, locked = keeper_lock()
     st.caption("What each team brings to the draft after keepers: picks they'll "
                "actually make, future-pick stash, and a win-now vs. rebuild lean. "
-               "Tap a team to see their full keeper contracts.")
+               + ("Tap a team to see their locked keepers." if locked else
+                  "Tap a team to see their full keeper contracts."))
     rows = []
     for o in MANAGERS:
         kr = team_keeper_rows(o)
@@ -1495,8 +1505,11 @@ def render_draft_capital() -> None:
         pct = max(4, round(100 * abs(kval) / max_abs))
         val_cls = "val-pos" if kval >= 0 else "val-neg"
         df = build_candidate_rows(o)
+        if locked:
+            kept_ids = {s.get("player_id") for s in manager_submitted(o)}
+            df = df[df["player_id"].isin(kept_ids)]
         body = (_contract_cards_grid_html(df) if not df.empty
-                else '<p class="empty-note">Nothing to show.</p>')
+                else '<p class="empty-note">Nothing submitted.</p>')
         cards.append(
             f'<details class="dc-row">'
             f'<summary>'
@@ -2027,20 +2040,6 @@ def render_mock_draft() -> None:
                "how your league really values rookies.")
 
 
-def _saved_slip(owner_id: str):
-    """Read-only table of a manager's already-submitted keepers (or None)."""
-    saved = manager_submitted(owner_id)
-    if not saved:
-        return None
-    rows = [{
-        "Player": s.get("player_name"), "Pos": s.get("position"),
-        "Type": "Rookie" if s.get("is_rookie_keeper") else "Regular",
-        "Keep Year": s.get("keep_year"),
-        "Cost": f"Round {s['cost_round']}" if s.get("cost_round") else "—",
-    } for s in sorted(saved, key=lambda x: (x.get("cost_round") or 99))]
-    return pd.DataFrame(rows)
-
-
 def render_my_keepers() -> None:
     st.markdown('<h3>Set Your <span class="g">Keepers</span></h3>', unsafe_allow_html=True)
     deadline, locked = keeper_lock()
@@ -2059,12 +2058,15 @@ def render_my_keepers() -> None:
     owner_id = NAME_TO_ID[name]
 
     if locked:
-        slip = _saved_slip(owner_id)
-        if slip is None:
+        saved = manager_submitted(owner_id)
+        if not saved:
             st.info(f"{name} didn't submit any keepers before the deadline.")
-        else:
-            st.markdown("##### Your final keepers")
-            st.dataframe(slip, hide_index=True, use_container_width=True)
+            return
+        st.markdown("##### Your locked keepers")
+        kept_ids = {s.get("player_id") for s in saved}
+        df = build_candidate_rows(owner_id)
+        df = df[df["player_id"].isin(kept_ids)]
+        render_contract_cards(name, df, show_title=False)
         return
 
     df = build_candidate_rows(owner_id)
