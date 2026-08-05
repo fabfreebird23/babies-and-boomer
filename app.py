@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime as dt
 import math
+import re
 
 import pandas as pd
 import streamlit as st
@@ -317,6 +318,86 @@ def build_candidate_rows(owner_id: str) -> pd.DataFrame:
     if not df.empty:
         df = df.sort_values(["Eligible", "ADP Rank"], ascending=[False, True], na_position="last")
     return df.reset_index(drop=True)
+
+
+def _contract_card_html(row) -> str:
+    """One player's keeper economics as a position-accent card — the same
+    build_candidate_rows() row Set My Keepers uses, just rendered as a card
+    instead of a data_editor row."""
+    keep_year = row["Keep Year"]
+    keep_year_int = int(keep_year) if isinstance(keep_year, (int, float)) and not isinstance(keep_year, bool) else None
+    is_rookie = keep_year == 1 and row["Acq."] == "rookie→reg"
+    eligible = bool(row["Eligible"])
+    at_wall = eligible and keep_year_int == 3
+    tier_cls = ("wall" if at_wall else "" if eligible else "ineligible")
+    css_cls = f'ccard pos-{row["Pos"]} {tier_cls}'.strip()
+
+    cost_round = None
+    m = re.match(r"Round (\d+)", str(row["Reg. Cost"]))
+    if m:
+        cost_round = int(m.group(1))
+    cost_label = row["Reg. Cost"] if isinstance(row["Reg. Cost"], str) else "—"
+    cost_big, cost_small = (f"R{cost_round}", "cost") if cost_round is not None else ("—", cost_label)
+
+    # pandas stores a missing numeric as NaN, not None or falsy — `if row["ADP
+    # Rank"]` alone would let a NaN through (bool(nan) is True) and crash
+    # adp_rank_to_round's math.ceil(). pd.notna() is the correct guard.
+    adp_round = (engine.adp_rank_to_round(row["ADP Rank"], NT)
+                 if pd.notna(row["ADP Rank"]) else None)
+
+    pips_n = keep_year_int if keep_year_int is not None else (3 if keep_year == "DONE" else 0)
+    pips = "".join(f'<span class="pip{" on" if i < pips_n else ""}"></span>' for i in range(3))
+
+    badges = []
+    if is_rookie:
+        badges.append('<span class="badge rookie">Rookie Keeper</span>')
+    elif keep_year_int is not None:
+        badges.append(f'<span class="badge">Year {keep_year_int} of 3</span>')
+    if adp_round:
+        badges.append(f'<span class="badge">ADP R{adp_round}</span>')
+    surplus = None
+    if cost_round is not None and adp_round is not None:
+        surplus = adp_round - cost_round
+        cls = "surplus-pos" if surplus > 0 else ("surplus-neg" if surplus < 0 else "")
+        sign = f"+{surplus}" if surplus > 0 else str(surplus)
+        badges.append(f'<span class="badge {cls}">{sign} RD SURPLUS</span>')
+
+    if not eligible:
+        note = ("Not eligible to keep — clock's up or no pick left to use." if keep_year == "DONE"
+                else "No pick available at or before this round.")
+    elif surplus is not None and surplus > 5:
+        note = "Big discount to market — a strong keep."
+    elif surplus is not None and surplus < 0:
+        note = "Underwater vs. ADP — the market's moved past this cost."
+    else:
+        note = ""
+
+    return (
+        f'<div class="{css_cls}">'
+        f'<div class="ccard-top">'
+        f'<div><h4>{row["Player"]}</h4><div class="pos">{row["Pos"]} · {row["NFL"] or "FA"}</div></div>'
+        f'<div class="cost"><b>{cost_big}</b><small>{cost_small}</small></div>'
+        f'</div>'
+        f'<div class="pips">{pips}</div>'
+        f'<div class="badges">{"".join(badges)}</div>'
+        + (f'<div class="note">{note}</div>' if note else "")
+        + '</div>'
+    )
+
+
+def _contract_cards_grid_html(df: pd.DataFrame) -> str:
+    return '<div class="contract-grid">' + "".join(_contract_card_html(r) for _, r in df.iterrows()) + '</div>'
+
+
+def render_contract_cards(name: str, df: pd.DataFrame, show_title: bool = True) -> None:
+    eligible_n = int(df["Eligible"].sum()) if not df.empty else 0
+    head = (
+        f'<div class="kr-section-head"><h3>Contracts — <span class="g">{name}</span></h3>'
+        f'<span class="tag">{eligible_n} eligible</span></div>'
+        if show_title else ""
+    )
+    body = _contract_cards_grid_html(df) if not df.empty else '<p style="color:var(--muted);font-size:13px;">Nothing to show.</p>'
+    st.markdown(f'<div class="kr-section">{head}{body}</div>', unsafe_allow_html=True)
 
 
 def _years_exp(pid: str):
@@ -729,6 +810,9 @@ def _leaderboard_html(df) -> str:
 
 
 def render_team_boxes() -> None:
+    """Compact per-team keeper summary. See render_team_contracts() for the
+    full detailed browse (Keepers tab), which shows every eligible player,
+    not just already-submitted keepers."""
     data = submitted_keepers()
     cards = []
     for oid, m in MANAGERS.items():
@@ -743,12 +827,101 @@ def render_team_boxes() -> None:
                 rk = '<span class="rk-tag">RK</span>' if s.get("is_rookie_keeper") else ""
                 rd = f"R{s['cost_round']}" if s.get("cost_round") else "ADP"
                 hs = theme.img_tag(s.get("player_id", ""), cls="")
-                inner += (f'<div class="kp">{hs}<span>{s["player_name"]}{rk}</span>'
+                pos = s.get("position") or ""
+                dot = f'<span class="posdot p-{pos}"></span>' if pos else ""
+                inner += (f'<div class="kp">{hs}{dot}<span>{s["player_name"]}{rk}</span>'
                           f'<span class="rd">{rd}</span></div>')
         else:
             inner = '<div class="empty">— no keepers yet —</div>'
         cards.append(f'<div class="kcard"><h4>{m["name"]}</h4>{inner}</div>')
     st.markdown('<div class="kcards">' + "".join(cards) + "</div>", unsafe_allow_html=True)
+
+
+def render_team_contracts() -> None:
+    """Full keeper-economics browse, every eligible player per team, as
+    collapsible position-accent card grids — the detailed companion to the
+    compact summary on Home."""
+    st.markdown('<h2 class="two-tone">Team <span class="g">Contracts</span></h2>', unsafe_allow_html=True)
+    st.caption("Every keeper-eligible player on every roster, not just what's been submitted — "
+               "cost, ADP surplus, and the 3-year clock at a glance.")
+    for oid, m in MANAGERS.items():
+        df = build_candidate_rows(oid)
+        body = (_contract_cards_grid_html(df) if not df.empty
+                else '<p class="empty-note">Nothing to show.</p>')
+        st.markdown(
+            f'<details class="team-details">'
+            f'<summary>Contracts — {m["name"]}</summary>'
+            f'<div class="team-details-body">{body}</div>'
+            f'</details>',
+            unsafe_allow_html=True,
+        )
+
+
+def _last_season_champ():
+    """(champ name, season year) for the most recently COMPLETED season, or
+    None if there isn't one yet. Uses only pre-existing sleeper.* functions."""
+    from kreeper import sleeper
+    chain = sleeper.league_chain(LEAGUE["sleeper_league_id"])
+    prior = sorted((c for c in chain if c["season"] != SEASON),
+                   key=lambda c: -int(c["season"]))
+    if not prior:
+        return None
+    lid = prior[0]["league_id"]
+    r2o = {int(r["roster_id"]): str(r.get("owner_id")) for r in sleeper.get_rosters(lid)}
+    for m in sleeper.get_winners_bracket(lid):
+        if m.get("p") == 1 and m.get("w") is not None:
+            return config.manager_name(r2o.get(int(m["w"]))), prior[0]["season"]
+    return None
+
+
+def _biggest_adp_mover(top_n: int = 50, window_days: int = 30):
+    """The single largest ADP-rank move among currently top-`top_n` players
+    over the last `window_days`, or None if there's not enough history yet."""
+    mv = adp_consensus.adp_movement(SEASON, window_days=window_days)
+    moves = [m for m in mv.get("moves", []) if abs(m["delta"]) >= 1 and m["now"] <= top_n]
+    if not moves:
+        return None
+    return max(moves, key=lambda m: abs(m["delta"]))
+
+
+def render_home_glance() -> None:
+    """Three quick-glance liquid-fill stats: this year's title favorite, last
+    season's champ, and the biggest ADP mover inside the realistic draft pool."""
+    stats = []
+
+    try:
+        odds = build_championship_odds()
+    except Exception:  # noqa: BLE001
+        odds = []
+    if odds:
+        top = odds[0]
+        stats.append(theme.liquid_stat_html(
+            top["Win %"] / 100, f'{top["Win %"]:g}%', "Win",
+            "Title Favorite", top["Team"],
+        ))
+
+    champ = _last_season_champ()
+    if champ:
+        name, yr = champ
+        stats.append(theme.liquid_stat_html(
+            0.92, "🏆", str(yr), "Reigning Champ", name,
+        ))
+
+    mover = _biggest_adp_mover()
+    if mover:
+        arrow = "▲" if mover["delta"] > 0 else "▼"
+        stats.append(theme.liquid_stat_html(
+            0.65, f'{arrow}{abs(mover["delta"])}', f'#{mover["now"]}',
+            "Biggest ADP Move", f'{mover["name"]} ({mover["pos"]})',
+            accent=theme.GOLD_D if mover["delta"] > 0 else theme.RED,
+        ))
+
+    if not stats:
+        return
+    st.markdown(
+        '<div class="glance"><div class="glance-stats">' + "".join(stats) + '</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_home() -> None:
@@ -769,6 +942,16 @@ def render_home() -> None:
         ),
         unsafe_allow_html=True,
     )
+    from kreeper import phase as phase_mod
+    try:
+        ph = phase_mod.current_phase()
+    except Exception:  # noqa: BLE001 — a flaky Sleeper call shouldn't crash Home
+        ph = "keepers_open"
+    deadline = config.keeper_deadline()
+    keeper_sub = deadline.strftime("%b %-d") if deadline else ""
+    draft_sub = phase_mod.draft_date_label()
+    st.markdown(theme.phase_stepper_html(ph, keeper_sub, draft_sub), unsafe_allow_html=True)
+    render_home_glance()
     render_countdown()
     st.markdown(f'<h2>{theme.crt("top")}Top 50 Keeper Values</h2>', unsafe_allow_html=True)
     st.caption("Best keeper bargains across every roster — draft value gained by keeping a "
@@ -856,6 +1039,36 @@ def render_rookies() -> None:
     st.markdown('<div class="neonwrap" style="max-height:660px;overflow:auto;">'
                 '<table class="lb lb-rook"><thead>' + head + '</thead><tbody>'
                 + "".join(rows) + '</tbody></table></div>', unsafe_allow_html=True)
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def get_recent_trades(limit: int = 8) -> list:
+    from kreeper import trades as trades_mod
+    return trades_mod.recent_trades(lambda pid: H.player_meta(pid).name, limit=limit)
+
+
+def render_recent_trades() -> None:
+    st.markdown('<h2 class="two-tone">Recent <span class="g">Trades</span></h2>', unsafe_allow_html=True)
+    st.caption("Every deal carries its keeper round obligations forward to the new team.")
+    deals = get_recent_trades()
+    if not deals:
+        st.info("No completed trades on record yet.")
+        return
+    cards = []
+    for t in deals:
+        header = ' <span class="vs">traded with</span> '.join(f'<b>{nm}</b>' for nm, _ in t["teams"])
+        cols = "".join(
+            f'<div><b>{nm} receives</b>'
+            + "".join(f'<span class="chip asset">{a}</span>' for a in assets)
+            + '</div>'
+            for nm, assets in t["teams"]
+        )
+        cards.append(
+            f'<div class="trade"><div class="trade-teams">{header}</div>'
+            f'<div class="trade-assets">{cols}</div>'
+            f'<div class="trade-date">{t["date"]}</div></div>'
+        )
+    st.markdown('<div class="trades-wrap">' + "".join(cards) + '</div>', unsafe_allow_html=True)
 
 
 def render_trade_targets() -> None:
@@ -1267,7 +1480,8 @@ def render_adp_trends() -> None:
 
 
 def render_draft_capital() -> None:
-    st.markdown(f'<h2>{theme.crt("draft")}Draft Capital &amp; Keeper Cost</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="two-tone">Draft <span class="g">Capital</span> &amp; Keeper Cost</h2>',
+                unsafe_allow_html=True)
     st.caption("What each team brings to the draft after keepers: picks they'll "
                "actually make, future-pick stash, and a win-now vs. rebuild lean.")
     rows = []
@@ -1281,22 +1495,23 @@ def render_draft_capital() -> None:
         kval = sum(int(r.get("Value", 0)) for r in kr)
         net_future = (p27 - DRAFT_ROUNDS) + (p28 - DRAFT_ROUNDS)
         if net_future >= 2:
-            lean = '<span class="rk-badge">🔄 REBUILD</span>'
+            lean = '<span class="chip rebuild">Rebuild</span>'
         elif net_future <= -2 or draftable <= 8:
-            lean = '<span class="kept-badge">🔥 WIN-NOW</span>'
+            lean = '<span class="chip win-now">Win-Now</span>'
         else:
-            lean = '<span style="color:#8a7fb3;">⚖️ Balanced</span>'
+            lean = '<span class="chip balanced">Balanced</span>'
         rows.append((config.manager_name(o), nk, kval, p26, draftable, p27, p28, lean, net_future))
     rows.sort(key=lambda x: (-x[2]))  # by keeper value
     body = "".join(
-        f'<tr><td class="rk">{i}</td><td class="pl">{nm}</td><td class="num">{nk}</td>'
-        f'<td class="num">{kval:+d}</td><td class="num">{p26}</td><td class="num">{dr}</td>'
+        f'<tr><td class="rk">{i}</td><td class="team">{nm}</td><td class="num">{nk}</td>'
+        f'<td class="num {"val-pos" if kval >= 0 else "val-neg"}">{kval:+d}</td>'
+        f'<td class="num">{p26}</td><td class="num">{dr}</td>'
         f'<td class="num">{p27}</td><td class="num">{p28}</td><td>{lean}</td></tr>'
         for i, (nm, nk, kval, p26, dr, p27, p28, lean, _nf) in enumerate(rows, 1))
-    head = ('<tr><th>#</th><th>Team</th><th>Keepers</th><th>Keeper&nbsp;Val</th>'
-            f'<th>{SEASON}&nbsp;Picks</th><th>After&nbsp;Keepers</th><th>{SEASON+1}</th><th>{SEASON+2}</th>'
-            '<th>Lean</th></tr>')
-    st.markdown('<div class="neonwrap"><table class="lb"><thead>' + head
+    head = ('<tr><th>#</th><th>Team</th><th class="num">Keepers</th><th class="num">Keeper&nbsp;Val</th>'
+            f'<th class="num">{SEASON}&nbsp;Picks</th><th class="num">After&nbsp;Keepers</th>'
+            f'<th class="num">{SEASON+1}</th><th class="num">{SEASON+2}</th><th>Lean</th></tr>')
+    st.markdown('<div class="cap-wrap"><table class="cap"><thead>' + head
                 + '</thead><tbody>' + body + '</tbody></table></div>', unsafe_allow_html=True)
     st.caption(f"After Keepers = {SEASON} picks you'll actually draft. {SEASON+1}/{SEASON+2} = total "
                f"picks owned that year ({DRAFT_ROUNDS} = untouched). Lean: hoarding future picks → "
@@ -1391,13 +1606,27 @@ def _render_lottery_conduct() -> None:
     st.markdown('<div class="neonwrap"><table class="lb"><thead>'
                 '<tr><th>#</th><th>Team</th><th>Tier</th><th>Balls</th></tr></thead><tbody>'
                 + rows + f'</tbody></table></div>', unsafe_allow_html=True)
-    st.caption(f"{total} balls total. Odds below are each team's exact chance at each "
-               "selection position (1st choice through last).")
+    st.caption(f"{total} balls total.")
 
     weights = {o: info["weight"] for o, info in tiers.items()}
     probs = lottery.position_probabilities(weights)
     order_by_weight = sorted(tiers, key=lambda o: -tiers[o]["weight"])
     n = len(order_by_weight)
+
+    st.markdown("##### 🎯 Odds at 1st choice")
+    st.caption("Quick-scan favorite — the full position-by-position breakdown is below.")
+    bar_rows = "".join(
+        f'<div class="lot-row"><div class="lot-label"><b>{config.manager_name(o)}</b>'
+        f'<small>{tiers[o]["tier"]} · {tiers[o]["weight"]} balls</small></div>'
+        f'<div class="lot-track"><div class="lot-fill" style="width:{max(probs[o][0]*100, 1.5):.1f}%">'
+        f'{probs[o][0]*100:.1f}%</div></div>'
+        f'<div class="lot-pos">#{i+1}</div></div>'
+        for i, o in enumerate(order_by_weight)
+    )
+    st.markdown(f'<div class="lot-wrap">{bar_rows}</div>', unsafe_allow_html=True)
+
+    st.markdown("##### Full odds — every selection position")
+    st.caption("Each team's exact chance at each selection position (1st choice through last).")
     head = '<tr><th>Team</th>' + "".join(f'<th>{i+1}{"st" if i==0 else "nd" if i==1 else "rd" if i==2 else "th"}</th>' for i in range(n)) + '</tr>'
     body = "".join(
         f'<tr><td class="pl">{config.manager_name(o)}</td>'
@@ -2215,17 +2444,8 @@ page = st.query_params.get("p", "home")
 if page not in _VALID:
     page = "home"
 
-# Static top bar on every page: clickable B&B logo (-> Home) + section links.
-navlinks = "".join(
-    f'<a class="navlink{" active" if k == page else ""}" href="?p={k}" target="_self">{label}</a>'
-    for k, label in SECTIONS
-)
-st.markdown(
-    '<div class="kbar">'
-    '<a class="khome" href="?p=home" target="_self">' + theme.logo_html(30, None, "B&amp;B") + '</a>'
-    f'<div class="topnav">{navlinks}</div></div>',
-    unsafe_allow_html=True,
-)
+# Fixed bottom pill nav on every page: B&B mark + section links.
+st.markdown(theme.bottom_nav_html(SECTIONS, page), unsafe_allow_html=True)
 
 # Sidebar keeps league info + ADP freshness (secondary).
 with st.sidebar:
@@ -2251,13 +2471,15 @@ with st.sidebar:
 if page == "home":
     render_home()
 elif page == "keepers":
-    t1, t2, t3 = st.tabs(["📋 Set My Keepers", "🗺️ Keeper Landscape", "🧩 Roster Needs"])
+    t1, t2, t3, t4 = st.tabs(["📋 Set My Keepers", "🗺️ Keeper Landscape", "🧩 Roster Needs", "📇 Team Contracts"])
     with t1:
         render_my_keepers()
     with t2:
         render_keeper_landscape()
     with t3:
         render_roster_needs()
+    with t4:
+        render_team_contracts()
 elif page == "draft":
     t1, t2, t3, t4 = st.tabs(["🃏 Draft Board", "🔮 Projected Draft", "💰 Draft Capital", "🎟️ Lottery"])
     with t1:
@@ -2269,11 +2491,13 @@ elif page == "draft":
     with t4:
         render_lottery()
 elif page == "trades":
-    t1, t2 = st.tabs(["🔁 Trade Market", "⚖️ Trade Analyzer"])
+    t1, t2, t3 = st.tabs(["🔁 Trade Market", "⚖️ Trade Analyzer", "🕐 Recent Trades"])
     with t1:
         render_trade_targets()
     with t2:
         render_trade_analyzer()
+    with t3:
+        render_recent_trades()
 elif page == "league":
     t1, t2, t3, t4 = st.tabs(["🎲 Title Odds", "🏆 Record Book", "🎯 Keeper Hit-Rate", "🏅 Superlatives"])
     with t1:

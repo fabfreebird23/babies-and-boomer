@@ -5,6 +5,8 @@ cards, draft board) plus purple-duotone, gold-framed Sleeper headshots.
 """
 from __future__ import annotations
 
+import math
+
 _ASSETS = None  # (sneaker assets no longer used; section icon is an inline SVG)
 
 SLEEPER_IMG = "https://sleepercdn.com/content/nfl/players/thumb/{pid}.jpg"
@@ -195,17 +197,23 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .sneak{ display:inline-block; vertical-align:middle; height:42px; margin:0 14px 6px 0;
   filter:drop-shadow(2px 3px 0 rgba(123,91,216,.35)); }
 
-/* static top navigation bar (Eastbay label tags) */
-.kbar{ display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-  padding-bottom:10px; margin-bottom:14px; border-bottom:3px solid var(--gold); }
-.khome{ text-decoration:none !important; line-height:1; }
-.khome .neon-logo{ font-size:30px; margin:0; }
-.topnav{ display:flex; gap:8px; flex-wrap:wrap; }
-.navlink{ font-family:'Anton'; text-transform:uppercase; letter-spacing:1px; font-size:13px;
-  color:var(--purple) !important; text-decoration:none !important; padding:6px 13px; border-radius:0;
-  border:1.5px solid var(--purple); background:#fff; transition:.12s; white-space:nowrap; }
-.navlink:hover{ border-color:var(--gold-d); color:var(--gold-d) !important; }
-.navlink.active{ background:var(--gold); color:var(--purple-d) !important; border-color:var(--gold); }
+/* fixed bottom pill nav — replaces the old static top bar. Leave room at
+   the foot of the page so content never sits under it. */
+[data-testid="stAppViewContainer"] .block-container{ padding-bottom:92px !important; }
+.bottom-bar-wrap{ position:fixed; left:0; right:0; bottom:16px; display:flex;
+  justify-content:center; z-index:1000; pointer-events:none; }
+.bottom-bar{ pointer-events:auto; display:flex; align-items:center; gap:2px;
+  background:rgba(255,255,255,.97); backdrop-filter:blur(10px);
+  border:2px solid var(--purple); border-radius:999px; padding:5px 5px 5px 8px;
+  box-shadow:0 12px 30px rgba(75,45,159,.28); }
+.bb-logo{ display:inline-flex; align-items:center; margin-right:2px; text-decoration:none !important; }
+.bb-logo .neon-logo{ font-size:20px; -webkit-text-stroke-width:1.5px; }
+.navlink{ font-family:'Anton'; text-transform:uppercase; letter-spacing:.6px; font-size:12px;
+  color:var(--purple) !important; text-decoration:none !important; padding:9px 16px !important;
+  border-radius:999px !important; border:none !important; background:none; transition:opacity .2s, background .2s;
+  white-space:nowrap; opacity:.72; }
+.navlink:hover{ opacity:1; }
+.navlink.active{ opacity:1; background:var(--gold); color:var(--purple-d) !important; }
 
 /* sub-tabs (st.tabs) -> gold accent */
 [data-baseweb="tab-list"]{ border-bottom:2px solid var(--line) !important; }
@@ -217,9 +225,11 @@ button[data-baseweb="tab"][aria-selected="true"]{ color:var(--gold-d) !important
 @media (max-width: 640px){
   .neon-logo{ font-size:40px !important; -webkit-text-stroke-width:2px; }
   .neon-tag{ font-size:8px; letter-spacing:4px; }
-  .kbar{ gap:8px; }
-  .khome .neon-logo{ font-size:24px !important; }
-  .navlink{ font-size:11px; padding:5px 9px; letter-spacing:.5px; }
+  [data-testid="stAppViewContainer"] .block-container{ padding-bottom:84px !important; }
+  .bottom-bar-wrap{ bottom:10px; }
+  .bottom-bar{ gap:0; padding:4px; }
+  .bb-logo{ display:none; }
+  .navlink{ font-size:10px; padding:8px 11px !important; letter-spacing:.3px; }
   h1{ font-size:1.5rem !important; }
   h2{ font-size:1.25rem !important; }
   h3{ font-size:1.15rem !important; }
@@ -248,7 +258,157 @@ button[data-baseweb="tab"][aria-selected="true"]{ color:var(--gold-d) !important
   .dbcell{ height:auto; }
   table.dboard td.dbcell{ padding:2px 3px; }
   .db-rd{ font-size:10px; }
+
+  .glance-stats{ gap:20px !important; }
+  .stepper .sub{ display:none; }
+  .cap-wrap{ overflow-x:auto; }
+  .contract-grid{ grid-template-columns:1fr !important; }
+  .lot-label{ width:100px !important; }
+  .lot-label small{ display:none; }
 }
+
+/* per-team collapsible contract-card sections — plain HTML <details>/<summary>
+   instead of st.expander, so each one can carry its own accent color. */
+details.team-details{ border:1px solid var(--line); border-left:4px solid var(--purple);
+  background:#fff; margin-bottom:10px; overflow:hidden; box-shadow:0 4px 12px rgba(75,45,159,.06); }
+details.team-details summary{ list-style:none; cursor:pointer; padding:13px 16px;
+  font-family:'Anton', sans-serif; letter-spacing:.3px; font-size:15px; color:var(--purple-d);
+  transition:background .12s; }
+details.team-details summary::-webkit-details-marker{ display:none; }
+details.team-details summary:hover{ background:rgba(255,206,31,.10); }
+details.team-details .team-details-body{ padding:6px 16px 16px; }
+details.team-details .empty-note{ color:var(--muted); font-size:13px; padding:0 0 4px; margin:0; }
+
+/* two-tone heading accent — wrap the one word that matters in <span class="g"> */
+.g{ background:linear-gradient(90deg, var(--purple), var(--purple-l) 55%, var(--gold-d));
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+/* a bare h2 stays the filled purple/gold panel bar; opt any heading into the
+   two-tone look (no filled bar, no white text) with this class instead */
+h2.two-tone{ background:none !important; border:none !important; box-shadow:none !important;
+  padding:0 !important; display:block !important; color:var(--purple) !important;
+  font-size:1.55rem !important; margin-bottom:4px !important; }
+h2.two-tone, h2.two-tone *{ color:var(--purple) !important; }
+h2.two-tone .g{ -webkit-text-fill-color:transparent !important; }
+
+/* ---------------- season-phase stepper ---------------- */
+.stepper{ display:flex; align-items:flex-start; }
+.step{ flex:1; position:relative; text-align:center; }
+.step .dot{ width:30px; height:30px; border-radius:50%; margin:0 auto 8px; display:flex;
+  align-items:center; justify-content:center; font-family:'Anton', sans-serif; font-size:12px;
+  background:var(--panel2); border:2px solid var(--line); color:var(--muted); position:relative; z-index:2; }
+.step .line{ position:absolute; top:15px; left:-50%; width:100%; height:2px; background:var(--line); z-index:1; }
+.step:first-child .line{ display:none; }
+.step .lbl{ font-family:'Anton', sans-serif; font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); }
+.step .sub{ font-size:9.5px; color:var(--muted); opacity:.75; margin-top:2px; }
+.step.done .dot{ background:#1c9b63; border-color:#1c9b63; color:#fff; }
+.step.done .dot::after{ content:"\2713"; }
+.step.done .line{ background:#1c9b63; }
+.step.now .dot{ background:var(--gold); border-color:var(--gold-d); color:var(--purple-d);
+  box-shadow:0 0 0 4px rgba(255,206,31,.35); animation:step-pulse 2.2s ease-in-out infinite; }
+.step.now .lbl{ color:var(--purple); }
+@keyframes step-pulse{ 0%,100%{ box-shadow:0 0 0 4px rgba(255,206,31,.35);} 50%{ box-shadow:0 0 0 9px rgba(255,206,31,.08);} }
+@media (prefers-reduced-motion: reduce){ .step.now .dot{ animation:none !important; } }
+
+/* ---------------- glance panel: liquid-fill gauges ---------------- */
+.glance{ border:1px solid var(--gold-d); background:#fff; margin:14px 0 26px;
+  padding:20px 26px; box-shadow:0 8px 26px rgba(75,45,159,.10); position:relative; }
+.glance::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--gold); }
+.glance-stats{ display:flex; gap:40px; flex-wrap:wrap; }
+.gstat{ display:flex; align-items:center; gap:16px; }
+.liq-ring{ position:relative; display:inline-flex; }
+.liq-ring svg{ display:block; }
+.liq-val{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center; line-height:1.1; pointer-events:none; }
+.liq-val b{ font-family:'Anton'; font-weight:400; color:var(--purple-d); }
+.liq-val small{ font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+.gstat .txt .lbl{ font-family:'Anton'; font-size:11px; letter-spacing:.8px; text-transform:uppercase; color:var(--purple); }
+.gstat .txt .sub{ font-size:12.5px; color:var(--muted); margin-top:3px; max-width:190px; }
+.liq-bob{ transform:translateY(var(--sy,0px)); }
+.liq-wv.front{ animation:liq-front 7s linear infinite; }
+.liq-wv.back{ animation:liq-back 11s linear infinite; }
+@keyframes liq-front{ from{ transform:translateX(0);} to{ transform:translateX(-200px);} }
+@keyframes liq-back{ from{ transform:translateX(0);} to{ transform:translateX(200px);} }
+@media (prefers-reduced-motion: reduce){ .liq-wv.front, .liq-wv.back{ animation:none !important; } }
+
+/* ---------------- de-blocked capital table + lean chips ---------------- */
+.cap-wrap{ background:#fff; border:2px solid var(--gold); padding:6px 16px; box-shadow:0 8px 26px rgba(75,45,159,.10); }
+table.cap{ width:100%; border-collapse:collapse; font-family:'Oswald'; font-size:14px; }
+table.cap th{ text-align:left; font-family:'Anton'; font-weight:400; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:1px; color:var(--muted); padding:0 10px 10px; border-bottom:2px solid var(--gold); }
+table.cap th.num{ text-align:right; }
+table.cap td{ padding:11px 10px; border-bottom:1px solid var(--line); color:var(--ink); }
+table.cap td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+table.cap tr:hover td{ background:rgba(255,206,31,.10); }
+table.cap .rk{ font-family:'Anton'; color:var(--gold-d); width:26px; }
+table.cap .team{ font-weight:600; }
+.val-pos{ color:#1c9b63; font-weight:600; }
+.val-neg{ color:var(--red); font-weight:600; }
+.chip{ display:inline-block; font-family:'Anton'; font-size:10px; letter-spacing:.6px;
+  text-transform:uppercase; padding:3px 9px; }
+.chip.win-now{ background:rgba(28,155,99,.14); color:#1c9b63; border:1px solid rgba(28,155,99,.4); }
+.chip.rebuild{ background:rgba(214,51,108,.12); color:var(--red); border:1px solid rgba(214,51,108,.4); }
+.chip.balanced{ background:rgba(75,45,159,.08); color:var(--purple); border:1px solid rgba(75,45,159,.3); }
+
+/* ---------------- contract cards (full browse grid) ---------------- */
+.kr-section{ margin-bottom:26px; }
+.kr-section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:12px; }
+.kr-section-head h3{ font-family:'Anton', sans-serif !important; font-size:20px !important;
+  font-weight:400 !important; letter-spacing:.3px; margin:0 !important; color:var(--purple-d) !important; }
+.kr-section-head .tag{ font-family:'Oswald'; font-weight:600; font-size:10.5px; letter-spacing:.6px;
+  text-transform:uppercase; color:var(--purple); }
+.contract-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.ccard{ border:1px solid var(--line); border-radius:0; padding:13px 15px 14px; position:relative;
+  background:#fff; overflow:hidden; box-shadow:0 4px 12px rgba(75,45,159,.06); transition:box-shadow .15s; }
+.ccard:hover{ box-shadow:0 6px 18px rgba(75,45,159,.14); }
+.ccard::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--muted); }
+.ccard.pos-QB::before{ background:var(--gold-d); }
+.ccard.pos-RB::before{ background:var(--purple-l); }
+.ccard.pos-WR::before{ background:var(--cyan); }
+.ccard.pos-TE::before{ background:var(--red); }
+.ccard.wall{ box-shadow:inset 0 0 0 1px rgba(214,51,108,.5); }
+.ccard.ineligible{ opacity:.55; }
+.ccard-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.ccard h4{ font-family:'Anton'; font-weight:400; font-size:17px; color:var(--purple-d); margin:0; letter-spacing:.2px; line-height:1.15; }
+.ccard .pos{ font-size:11px; color:var(--muted); margin-top:1px; }
+.ccard .cost{ text-align:right; }
+.ccard .cost b{ font-family:'Anton'; font-size:17px; color:var(--gold-d); display:block; line-height:1; font-weight:400; }
+.ccard .cost small{ font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.ccard .pips{ display:flex; gap:4px; margin:8px 0 7px; }
+.ccard .pip{ width:15px; height:6px; background:var(--line); }
+.ccard .pip.on{ background:var(--purple); }
+.ccard .badges{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px; }
+.ccard .badge{ font-family:'Oswald'; font-weight:600; font-size:9.5px; letter-spacing:.3px; text-transform:uppercase;
+  padding:3px 7px; border:1px solid var(--line); color:var(--muted); background:var(--panel2); }
+.ccard .badge.rookie{ background:rgba(123,91,216,.12); border-color:rgba(123,91,216,.35); color:var(--purple); }
+.ccard .badge.surplus-pos{ background:rgba(28,155,99,.12); border-color:rgba(28,155,99,.35); color:#1c9b63; }
+.ccard .badge.surplus-neg{ background:rgba(214,51,108,.12); border-color:rgba(214,51,108,.35); color:var(--red); }
+.ccard .note{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+/* ---------------- recent trades ---------------- */
+.trades-wrap{ background:#fff; border:2px solid var(--gold); padding:18px 24px; box-shadow:0 8px 26px rgba(75,45,159,.10); }
+.trade{ padding:15px 0; border-bottom:1px solid var(--line); }
+.trade:last-child{ border-bottom:none; padding-bottom:2px; }
+.trade-teams{ font-size:15px; font-weight:600; margin-bottom:10px; color:var(--ink); }
+.trade-teams .vs{ color:var(--muted); font-weight:400; font-size:12px; margin:0 6px; }
+.trade-assets{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.trade-assets div b{ display:block; font-size:9.5px; color:var(--muted); text-transform:uppercase;
+  letter-spacing:.6px; margin-bottom:7px; font-weight:600; }
+.chip.asset{ display:inline-block; font-size:11.5px; background:rgba(75,45,159,.06);
+  border:1px solid rgba(75,45,159,.28); color:var(--purple-d); padding:4px 10px; border-radius:999px;
+  margin:0 6px 6px 0; text-transform:none; font-family:'Oswald'; font-weight:500; letter-spacing:0; }
+.trade-date{ font-size:10.5px; color:var(--muted); margin-top:10px; text-transform:uppercase; letter-spacing:.5px; }
+
+/* ---------------- lottery bars ---------------- */
+.lot-wrap{ background:#fff; border:2px solid var(--gold); padding:18px 24px; box-shadow:0 8px 26px rgba(75,45,159,.10); }
+.lot-row{ display:flex; align-items:center; gap:14px; padding:8px 0; }
+.lot-label{ width:170px; flex:0 0 auto; }
+.lot-label b{ display:block; font-size:13.5px; font-weight:600; color:var(--ink); }
+.lot-label small{ display:block; font-size:10px; color:var(--muted); margin-top:1px; }
+.lot-track{ flex:1; height:20px; background:var(--panel2); border-radius:2px; position:relative; overflow:hidden; }
+.lot-fill{ height:100%; background:linear-gradient(90deg, var(--purple), var(--purple-l) 55%, var(--gold-d));
+  display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:10.5px;
+  color:#fff; font-weight:600; font-variant-numeric:tabular-nums; min-width:2px; }
+.lot-pos{ width:26px; text-align:right; font-family:'Anton'; color:var(--gold-d); font-size:13px; }
 </style>
 """
 
@@ -342,6 +502,108 @@ def hero(kicker: str, line1: str, line2: str, deck_html: str) -> str:
         f'<div class="eb-cuts">{cuts}</div>'
         '</div></div>'
     )
+
+
+def bottom_nav_html(sections: list, current: str) -> str:
+    """Fixed bottom pill nav: B&B mark + section links. `sections` is
+    [(key, label), ...]; `current` is the active section key."""
+    links = "".join(
+        f'<a class="navlink{" active" if k == current else ""}" href="?p={k}" target="_self">{label}</a>'
+        for k, label in sections
+    )
+    return (
+        '<div class="bottom-bar-wrap"><div class="bottom-bar">'
+        '<a class="bb-logo" href="?p=home" target="_self">'
+        + logo_html(20, None, "B&amp;B") + '</a>'
+        + links + '</div></div>'
+    )
+
+
+def _wave_d(amp: float, phase: float, second: float = 0.45) -> str:
+    """One seamless wave surface as an SVG path, in local coords where y=0 is
+    the still surface and +y is down. Two sine components at 200 and 100
+    units — both divide the 200-unit loop distance exactly, so translating
+    the path by -200 lands it back on itself with no visible seam.
+    (Identical generator to kreeper-league's — proven to tile cleanly.)"""
+    pts = []
+    x = -200.0
+    while x <= 400.0:
+        y = (amp * math.sin(2 * math.pi * x / 200.0 + phase)
+             + amp * second * math.sin(2 * math.pi * x / 100.0 - phase * 1.7))
+        pts.append("%.1f,%.2f" % (x, y))
+        x += 8.0
+    return "M " + " L ".join(pts) + " L 400,420 L -200,420 Z"
+
+
+_WAVE_FRONT = _wave_d(6.5, 0.0)
+_WAVE_BACK = _wave_d(4.8, 2.1, second=0.3)
+_liq_uid_counter = 0
+
+
+def liquid_ring_html(pct: float, value_html: str, label: str = "", size: int = 78,
+                      accent: str = PURPLE) -> str:
+    """A small animated liquid-wave-fill circle gauge, with an HTML value
+    overlaid in the middle. `pct` in [0, 1]."""
+    global _liq_uid_counter
+    _liq_uid_counter += 1
+    uid = f"liq{_liq_uid_counter}"
+    p = max(0.06, min(0.94, pct))
+    surface = 200.0 - 200.0 * p
+    inner = size - 8
+    k = inner / 200.0
+    off = (size - inner) / 2
+    cx = cy = size / 2
+    return (
+        f'<span class="liq-ring" style="width:{size}px;height:{size}px;">'
+        f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}" aria-hidden="true">'
+        f'<circle cx="{cx}" cy="{cy}" r="{(size-3)/2:.1f}" fill="none" '
+        f'stroke="#e3dcf2" stroke-width="1.5"/>'
+        f'<defs><clipPath id="{uid}"><circle cx="{cx}" cy="{cy}" r="{inner/2:.1f}"/></clipPath></defs>'
+        f'<g clip-path="url(#{uid})">'
+        f'<g transform="translate({off:.1f},{off:.1f}) scale({k:.4f})">'
+        f'<g class="liq-bob" style="--sy:{surface:.1f}px">'
+        f'<path class="liq-wv back" d="{_WAVE_BACK}" fill="{accent}" opacity=".4"/>'
+        f'<path class="liq-wv front" d="{_WAVE_FRONT}" fill="{accent}" opacity=".85"/>'
+        f'</g></g></g></svg>'
+        f'<span class="liq-val"><b>{value_html}</b>'
+        + (f'<small>{label}</small>' if label else '') + '</span>'
+        f'</span>'
+    )
+
+
+def liquid_stat_html(pct: float, value_html: str, ring_label: str, label: str, sub: str = "",
+                      size: int = 78, accent: str = PURPLE) -> str:
+    """A quick-glance stat: a liquid ring next to a label/sub text block."""
+    ring = liquid_ring_html(pct, value_html, ring_label, size=size, accent=accent)
+    return (f'<div class="gstat">{ring}'
+            f'<div class="txt"><div class="lbl">{label}</div>'
+            + (f'<div class="sub">{sub}</div>' if sub else '') + '</div></div>')
+
+
+def phase_stepper_html(current: str, keeper_sub: str = "", draft_sub: str = "") -> str:
+    """Horizontal season-phase progress. `current` is one of
+    kreeper.phase.PHASES; a synthetic "draft_event" milestone is inserted
+    between pre_draft and pre_season so the draft gets its own node."""
+    order = ["keepers_open", "pre_draft", "draft_event", "pre_season", "in_season", "offseason"]
+    labels = {
+        "keepers_open": ("Keepers", keeper_sub),
+        "pre_draft": ("Draft Prep", ""),
+        "draft_event": ("Draft", draft_sub),
+        "pre_season": ("Pre-Season", ""),
+        "in_season": ("In-Season", ""),
+        "offseason": ("Offseason", ""),
+    }
+    cur_idx = order.index(current) if current in order else 1
+    cells = []
+    for i, key in enumerate(order):
+        label, sub = labels[key]
+        state = "done" if i < cur_idx else ("now" if i == cur_idx else "")
+        dot = "" if state == "done" else ("●" if state == "now" else str(i + 1))
+        cells.append(
+            f'<div class="step {state}"><div class="line"></div><div class="dot">{dot}</div>'
+            f'<div class="lbl">{label}</div><div class="sub">{sub}</div></div>'
+        )
+    return '<div class="stepper">' + "".join(cells) + '</div>'
 
 
 def inject(st) -> None:

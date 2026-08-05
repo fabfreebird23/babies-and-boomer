@@ -87,6 +87,21 @@ def get_losers_bracket(league_id: str) -> List[Dict[str, Any]]:
     return _disk(f"loser_bracket_{league_id}", 86400, lambda: _get(f"league/{league_id}/losers_bracket") or [])
 
 
+def get_nfl_state() -> Dict[str, Any]:
+    """Sleeper's global NFL clock: {season, season_type, week, leg, ...}.
+    `season_type` is one of "pre" | "regular" | "post" | "off" — used to tell
+    a completed fantasy draft sitting in the preseason apart from a fantasy
+    season that's actually underway."""
+    return _disk("nfl_state", 3600, lambda: _get("state/nfl") or {})
+
+
+def get_transactions(league_id: str, week: int) -> List[Dict[str, Any]]:
+    """Waiver/free-agent/trade activity for one week (leg): [{type, status,
+    adds, drops, draft_picks, roster_ids, ...}, ...]."""
+    return _disk(f"transactions_{league_id}_{week}", 900,
+                 lambda: _get(f"league/{league_id}/transactions/{week}") or [])
+
+
 def league_chain(league_id: str) -> List[Dict[str, Any]]:
     """Walk previous_league_id back to the start.
 
