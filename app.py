@@ -931,8 +931,7 @@ def _current_phase() -> str:
 
 
 def _phase_label_sub(current: str) -> tuple:
-    """(label, sub) for a phase — shared by the top-bar chip and Home's
-    status line so they never drift out of sync."""
+    """(label, sub) for a phase, shown in the top-bar status line."""
     deadline = config.keeper_deadline()
     info = {
         "keepers_open": ("Keepers Open", f"Due {deadline.strftime('%b %-d')}" if deadline else ""),
@@ -944,21 +943,9 @@ def _phase_label_sub(current: str) -> tuple:
     return info.get(current, ("Draft Prep", ""))
 
 
-def _topbar_chip_html(current: str) -> str:
-    """Compact liquid-wave phase indicator for the top bar (persistent on
-    every page) — same liquid-ring asset as the Home glance panel, just a
-    quick-glance echo of it rather than a replacement."""
-    label, sub = _phase_label_sub(current)
-    idx = _PHASE_ORDER.index(current) if current in _PHASE_ORDER else 1
-    pct = (idx + 0.5) / len(_PHASE_ORDER)
-    inner = theme.liquid_stat_html(pct, "", "", label, sub, size=28, accent=theme.PURPLE_L)
-    return f'<div class="topbar-chip">{inner}</div>'
-
-
-def _home_status_line_html(current: str) -> str:
-    """A thin one-line context strip under the header on Home — the same
-    phase info as the top-bar chip, just placed at the top of the content
-    instead of tucked in the corner."""
+def _status_line_html(current: str) -> str:
+    """A thin one-line phase indicator under the wordmark in the top bar,
+    persistent on every page (replaces the old corner liquid-ring chip)."""
     label, sub = _phase_label_sub(current)
     sub_html = f' <span class="muted">&middot; {sub}</span>' if sub else ""
     return f'<div class="status-line"><span class="dot"></span>{label.upper()}{sub_html}</div>'
@@ -969,9 +956,9 @@ def render_home() -> None:
     decisions while they're still open, draft prep once they're locked, the
     draft recap once it wraps, and title odds once the season's live. See
     kreeper/phase.py for how the phase is inferred. The top-bar masthead
-    (kbar) already carries the branding, so Home goes straight into content."""
+    (kbar) already carries the branding and phase status, so Home goes
+    straight into content."""
     ph = _current_phase()
-    st.markdown(_home_status_line_html(ph), unsafe_allow_html=True)
     if ph == "pre_draft":
         _render_home_pre_draft()
     elif ph == "pre_season":
@@ -2638,14 +2625,14 @@ def render_bottom_bar() -> None:
 
 
 # Top bar on every page: centered "Babies & Boomer" script-logo masthead
-# band, clickable through to Home, plus the persistent phase chip tucked in
-# the corner (stacks above the wordmark on mobile — see .kbar CSS). Section
-# links live in the fixed bottom bar instead.
+# band, clickable through to Home, with the persistent phase status line
+# underneath, above the gold rule. Section links live in the fixed bottom
+# bar instead.
 st.markdown(
     f'<div class="kbar">'
-    f'{_topbar_chip_html(_current_phase())}'
     f'<a class="khome" href="?p=home" target="_self">'
     f'{theme.logo_html(30, "The Keeper Sportsource", "Babies &amp; Boomer")}</a>'
+    f'{_status_line_html(_current_phase())}'
     f'</div>',
     unsafe_allow_html=True,
 )

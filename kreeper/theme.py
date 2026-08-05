@@ -166,39 +166,22 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .db-conflict{ background:rgba(214,51,108,.14); color:#b3235a; box-shadow:inset 0 0 0 1px rgba(214,51,108,.4); }
 .db-rd{ background:var(--purple); color:var(--gold); font-family:'Anton'; text-align:center; white-space:nowrap; }
 
-/* top bar — centered script-logo masthead band, on every page. The phase
-   chip tucks into the corner; a gold rule closes the band off, echoing the
-   Home masthead's own gold underline. */
-.kbar{ position:relative; display:flex; flex-direction:column; align-items:center;
+/* top bar — centered script-logo masthead band, on every page, with the
+   phase status line underneath; a gold rule closes the whole band off. */
+.kbar{ display:flex; flex-direction:column; align-items:center;
   gap:2px; text-align:center; padding:16px 20px 13px; margin-bottom:8px;
   border-bottom:3px solid var(--gold); }
 .khome{ text-decoration:none !important; line-height:1; }
 .khome .neon-logo{ font-size:30px; -webkit-text-stroke-width:2px; }
 .khome .neon-tag{ margin-top:4px; }
 
-/* compact liquid-wave phase indicator, tucked top-right, persistent on every page */
-.topbar-chip{ position:absolute; top:12px; right:20px; background:var(--panel2);
-  border:1px solid var(--line); border-radius:999px; padding:6px 16px 6px 6px; }
-.topbar-chip .liquid-stat, .topbar-chip .gstat{ gap:10px; }
-.topbar-chip .liq-ring{ margin-bottom:0; }
-.topbar-chip .gstat .txt .lbl{ font-size:11.5px; font-weight:600; letter-spacing:.4px; color:var(--purple-d); }
-.topbar-chip .gstat .txt .sub{ font-size:9.5px; color:var(--muted); margin-top:1px; max-width:none; }
-
-/* Home's thin status line — same phase info as the top-bar chip, echoed
-   at the top of the content instead of tucked in the corner. */
-.status-line{ background:var(--panel2); border-bottom:1px solid var(--line); margin:0 0 18px;
-  padding:9px 20px; display:flex; align-items:center; justify-content:center; gap:8px;
-  font-family:'Oswald'; font-weight:700; font-size:12.5px; color:var(--purple-d);
-  text-transform:uppercase; letter-spacing:.4px; }
-.status-line .dot{ width:6px; height:6px; border-radius:50%; background:var(--gold-d); flex:none; }
+/* thin phase status line, persistent on every page, inside the top bar
+   band above the gold rule (replaces the old corner liquid-ring chip). */
+.status-line{ display:flex; align-items:center; justify-content:center; gap:6px;
+  margin-top:9px; font-family:'Oswald'; font-weight:700; font-size:11.5px;
+  color:var(--purple-d); text-transform:uppercase; letter-spacing:.4px; }
+.status-line .dot{ width:5px; height:5px; border-radius:50%; background:var(--gold-d); flex:none; }
 .status-line .muted{ color:var(--muted); font-weight:500; text-transform:none; letter-spacing:0; }
-
-@media (max-width: 640px){
-  /* the phase chip drops out entirely on mobile — Home already echoes the
-     same phase info in its status-line, and a fixed top-right pin doesn't
-     leave enough room next to a centered 30px script logo besides. */
-  .topbar-chip{ display:none; }
-}
 
 /* fixed bottom pill nav — replaces the old static top bar. Leave room at
    the foot of the page so content never sits under it. */
