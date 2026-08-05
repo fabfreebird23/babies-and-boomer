@@ -77,44 +77,6 @@ h3, h3 *{ color:var(--purple-d) !important; }
 /* let the sidebar mark spell the league name out across two lines */
 [data-testid="stSidebar"] .neon-logo{ white-space:normal; line-height:.92; -webkit-text-stroke-width:2px; }
 
-/* ---- magazine masthead + hero band (Home) ---- */
-.eb-mast{ display:flex; align-items:flex-start; justify-content:space-between; gap:18px;
-  border-bottom:3px solid var(--gold); padding-bottom:12px; margin-bottom:4px; }
-.eb-issue{ text-align:right; font-weight:700; white-space:nowrap; padding-top:6px; }
-.eb-issue .vol{ font-family:'Anton'; font-size:15px; color:var(--gold-d); letter-spacing:3px; }
-.eb-issue .sub{ font-size:11px; letter-spacing:3px; color:var(--purple-l); text-transform:uppercase; margin-top:3px; }
-.eb-issue .px{ display:inline-block; margin-top:8px; background:var(--gold); color:var(--purple-d);
-  font-family:'Anton'; font-size:12px; letter-spacing:2px; padding:3px 9px; transform:skewX(-8deg); }
-
-.eb-hero{ position:relative; margin:14px 0 22px; border:1px solid var(--line);
-  background:linear-gradient(120deg,#efe8fb,#fbf7ee 75%); overflow:hidden; box-shadow:0 8px 26px rgba(75,45,159,.10); }
-.eb-hwrap{ display:grid; grid-template-columns:1.2fr 1fr; }
-.eb-left{ padding:26px 26px 30px; }
-.eb-left .kicker{ font-weight:700; letter-spacing:6px; font-size:12px; color:var(--gold-d); text-transform:uppercase; }
-.eb-headline{ font-family:'Anton'; text-transform:uppercase; line-height:.9; margin:8px 0 2px; }
-.eb-headline .l1{ font-size:54px; letter-spacing:2px; color:var(--purple); }
-.eb-headline .l2{ font-size:54px; letter-spacing:13px; color:var(--gold-d); text-shadow:3px 3px 0 rgba(123,91,216,.25); }
-.eb-deck{ margin-top:12px; max-width:380px; color:#4a4070; font-size:14px; line-height:1.45; font-weight:500; }
-.eb-deck b{ color:var(--gold-d); }
-.eb-cuts{ position:relative; min-height:230px;
-  background:repeating-linear-gradient(180deg, rgba(75,45,159,.08) 0 2px, transparent 2px 6px); }
-.cut{ position:absolute; border:2px solid var(--gold-d); overflow:hidden; box-shadow:0 0 0 3px #fff, 0 6px 14px rgba(75,45,159,.18); }
-.cut svg{ display:block; width:100%; height:100%; }
-.cut.a{ width:128px; height:108px; top:44px; right:30px; }
-.cut.b{ width:108px; height:134px; top:96px; right:140px; }
-.cut.c{ width:136px; height:108px; bottom:18px; right:34px; }
-.lab{ position:absolute; display:inline-flex; font-family:'Oswald'; font-weight:700;
-  font-size:11px; letter-spacing:2px; text-transform:uppercase; z-index:3; }
-.lab span{ padding:3px 8px; }
-.lab .w{ background:#fff; color:var(--purple-d); border:1px solid var(--purple-d); }
-.lab .k{ background:var(--purple-d); color:#fff; }
-.lab.t1{ top:8px; right:26px; }
-.lab.t2{ top:78px; right:140px; }
-.lab.t3{ bottom:0; right:40px; }
-a.lab{ text-decoration:none; cursor:pointer; }
-a.lab:hover .w{ background:var(--gold); }
-a.lab:hover .k{ background:var(--purple); color:#fff; }
-
 /* sidebar nav radio (unused now) -> light label tags */
 [data-testid="stSidebar"] [role="radiogroup"] label{ border:1.5px solid var(--purple); border-radius:0;
   padding:6px 11px; margin-bottom:7px; background:#fff; transition:.12s; }
@@ -130,16 +92,19 @@ a.lab:hover .k{ background:var(--purple); color:#fff; }
 .stButton>button:hover{ background:var(--purple); color:#fff; box-shadow:0 0 0 2px var(--gold); }
 
 /* ---- shared custom tables ---- */
-.neonwrap{ overflow:auto; max-height:72vh; border:2px solid var(--gold); border-radius:0;
-  background:#fff; box-shadow:0 10px 28px rgba(75,45,159,.12); }
+/* No boxed card around tables — the gold header row + striped rows carry
+   the structure, so the table sits directly on the page like everything else. */
+.neonwrap{ overflow:auto; max-height:72vh; }
+/* Plain rows on a bottom border, no card/box around the table — the gold
+   underline on th and the row dividers are the only structure, so it reads
+   as a list that sits on the page rather than a boxed data-grid. */
 table.lb{ width:100%; border-collapse:collapse; font-family:'Oswald'; font-size:14px; }
-table.lb th{ background:var(--gold); color:var(--purple-d); text-transform:uppercase; letter-spacing:1px;
-  font-family:'Anton'; font-weight:400; font-size:12px; text-align:left; padding:8px 10px;
-  position:sticky; top:0; z-index:5; box-shadow:0 2px 0 var(--gold); }
+table.lb th{ color:var(--muted); text-transform:uppercase; letter-spacing:1px;
+  font-family:'Anton'; font-weight:400; font-size:11px; text-align:left; padding:8px 10px;
+  border-bottom:2px solid var(--gold); position:sticky; top:0; z-index:5; background:var(--bg); }
 table.lb th.r{ text-align:right; }
-table.lb td{ padding:6px 10px; border-bottom:1px solid var(--line); color:var(--ink); }
-table.lb tr:nth-child(odd) td{ background:rgba(123,91,216,.05); }
-table.lb tr:hover td{ background:rgba(255,206,31,.16); }
+table.lb td{ padding:7px 10px; border-bottom:1px solid var(--line); color:var(--ink); }
+table.lb tr:hover td{ background:rgba(75,45,159,.04); }
 table.lb tr.kept td{ background:linear-gradient(90deg, rgba(255,206,31,.30), rgba(255,206,31,.06)); }
 table.lb tr.kept td:first-child{ box-shadow:inset 4px 0 0 var(--gold-d); }
 .lb .rk{ font-family:'Anton'; color:var(--gold-d); width:34px; text-align:center; }
@@ -166,19 +131,27 @@ table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-famil
 .posdot{ display:inline-block; width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;}
 .p-QB{background:var(--gold-d);} .p-RB{background:var(--purple-l);} .p-WR{background:var(--cyan);} .p-TE{background:var(--red);}
 
-/* team cards — white panels, gold top rule */
-.kcards{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-.kcard{ border:1px solid var(--line); border-top:3px solid var(--gold); border-radius:0;
-  background:#fff; padding:10px 12px; min-height:96px; box-shadow:0 6px 18px rgba(75,45,159,.10); }
-.kcard h4{ font-family:'Anton'; font-size:15px; margin:0 0 6px; color:var(--purple); letter-spacing:1px; text-transform:uppercase; }
-.kcard .kp{ display:flex; align-items:center; font-size:13px; padding:2px 0; color:var(--ink); }
-.kcard .kp img{ width:24px;height:24px;border-radius:4px;margin-right:7px;object-fit:cover;background:#ece5fb;
-  border:1.5px solid var(--gold-d);
-  filter:grayscale(1) sepia(.55) hue-rotate(205deg) saturate(1.9) brightness(1.02); }
-.kcard .kp .rd{ margin-left:auto; color:var(--gold-d); font-weight:700; font-family:'Anton'; }
-.kcard .empty{ color:var(--muted); font-style:italic; font-size:12px; }
-.kcard .rk-tag{ color:var(--purple-d); background:var(--gold); font-size:9px; font-weight:700;
-  font-family:'Anton'; padding:0 4px; margin-left:5px; letter-spacing:1px; }
+/* stat cards (Superlatives, lottery draw order) — thin border + left accent
+   rail, no drop shadow or gold top-bar, echoing the Draft Capital rows and
+   contract cards rather than a heavier boxed style of its own. */
+.kcards{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.kcard{ border:1px solid var(--line); border-radius:10px; background:#fff;
+  padding:12px 14px; position:relative; overflow:hidden; box-shadow:0 2px 6px rgba(75,45,159,.05); }
+.kcard::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--gold-d); }
+.kcard h4{ font-family:'Anton'; font-weight:400; font-size:10.5px; letter-spacing:.6px;
+  text-transform:uppercase; color:var(--muted); margin:0 0 4px; }
+.kcard .who{ font-family:'Anton'; font-weight:400; font-size:16px; color:var(--purple-d); }
+.kcard .sub{ font-size:11.5px; color:var(--muted); margin-top:3px; }
+
+/* lottery draw-order reveal — a single-line row list, same idea as the
+   Draft Capital rows, instead of a grid of boxed cards. */
+.draw-list{ display:flex; flex-direction:column; gap:6px; }
+.draw-row{ display:flex; align-items:center; gap:12px; border:1px solid var(--line);
+  border-radius:10px; background:#fff; padding:10px 14px; box-shadow:0 2px 6px rgba(75,45,159,.05); }
+.draw-row .pickno{ font-family:'Anton'; font-weight:400; font-size:18px; color:var(--gold-d);
+  width:28px; text-align:center; flex:none; }
+.draw-row .who{ font-family:'Anton'; font-weight:400; font-size:15px; color:var(--purple-d); }
+.draw-row .sub{ font-size:11.5px; color:var(--muted); }
 
 /* draft board */
 table.dboard{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:'Oswald'; font-size:12px; }
@@ -193,9 +166,41 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .db-conflict{ background:rgba(214,51,108,.14); color:#b3235a; box-shadow:inset 0 0 0 1px rgba(214,51,108,.4); }
 .db-rd{ background:var(--purple); color:var(--gold); font-family:'Anton'; text-align:center; white-space:nowrap; }
 
-/* section header — duotone football (a colourway per section) */
-.sneak{ display:inline-block; vertical-align:middle; height:42px; margin:0 14px 6px 0;
-  filter:drop-shadow(2px 3px 0 rgba(123,91,216,.35)); }
+/* top bar — centered script-logo masthead band, on every page. The phase
+   chip tucks into the corner; a gold rule closes the band off, echoing the
+   Home masthead's own gold underline. */
+.kbar{ position:relative; display:flex; flex-direction:column; align-items:center;
+  gap:2px; text-align:center; padding:16px 20px 13px; margin-bottom:8px;
+  border-bottom:3px solid var(--gold); }
+.khome{ text-decoration:none !important; line-height:1; }
+.khome .neon-logo{ font-size:30px; -webkit-text-stroke-width:2px; }
+.khome .neon-tag{ margin-top:4px; }
+
+/* compact liquid-wave phase indicator, tucked top-right, persistent on every page */
+.topbar-chip{ position:absolute; top:12px; right:20px; background:var(--panel2);
+  border:1px solid var(--line); border-radius:999px; padding:6px 16px 6px 6px; }
+.topbar-chip .liquid-stat, .topbar-chip .gstat{ gap:10px; }
+.topbar-chip .liq-ring{ margin-bottom:0; }
+.topbar-chip .gstat .txt .lbl{ font-size:11.5px; font-weight:600; letter-spacing:.4px; color:var(--purple-d); }
+.topbar-chip .gstat .txt .sub{ font-size:9.5px; color:var(--muted); margin-top:1px; max-width:none; }
+
+/* Home's thin status line — same phase info as the top-bar chip, echoed
+   at the top of the content instead of tucked in the corner. */
+.status-line{ background:var(--panel2); border-bottom:1px solid var(--line); margin:0 0 18px;
+  padding:9px 20px; display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family:'Oswald'; font-weight:700; font-size:12.5px; color:var(--purple-d);
+  text-transform:uppercase; letter-spacing:.4px; }
+.status-line .dot{ width:6px; height:6px; border-radius:50%; background:var(--gold-d); flex:none; }
+.status-line .muted{ color:var(--muted); font-weight:500; text-transform:none; letter-spacing:0; }
+
+@media (max-width: 640px){
+  /* the chip drops out of the corner and stacks above the wordmark instead
+     — a fixed top-right pin doesn't leave enough room next to a centered
+     30px script logo on a narrow screen. */
+  .kbar{ padding-top:10px; }
+  .topbar-chip{ position:static; margin:0 auto 8px; }
+  .topbar-chip .gstat .txt .sub{ display:none; }
+}
 
 /* fixed bottom pill nav — replaces the old static top bar. Leave room at
    the foot of the page so content never sits under it. */
@@ -204,16 +209,40 @@ table.dboard td.dbcell{ padding:3px 4px; }
   justify-content:center; z-index:1000; pointer-events:none; }
 .bottom-bar{ pointer-events:auto; display:flex; align-items:center; gap:2px;
   background:rgba(255,255,255,.97); backdrop-filter:blur(10px);
-  border:2px solid var(--purple); border-radius:999px; padding:5px 5px 5px 8px;
+  border:2px solid var(--purple); border-radius:999px; padding:5px 8px;
   box-shadow:0 12px 30px rgba(75,45,159,.28); }
-.bb-logo{ display:inline-flex; align-items:center; margin-right:2px; text-decoration:none !important; }
-.bb-logo .neon-logo{ font-size:20px; -webkit-text-stroke-width:1.5px; }
 .navlink{ font-family:'Anton'; text-transform:uppercase; letter-spacing:.6px; font-size:12px;
   color:var(--purple) !important; text-decoration:none !important; padding:9px 16px !important;
   border-radius:999px !important; border:none !important; background:none; transition:opacity .2s, background .2s;
-  white-space:nowrap; opacity:.72; }
+  white-space:nowrap; opacity:.72; cursor:pointer; }
 .navlink:hover{ opacity:1; }
 .navlink.active{ opacity:1; background:var(--gold); color:var(--purple-d) !important; }
+
+/* bottom-bar popover — Pre-Season / In-Season drill down into their
+   sub-pages from a sheet anchored above the bar, instead of jumping
+   straight to a page and landing at the top of a long nested-tabs stack. */
+.bb-scrim{ position:fixed; inset:0; background:rgba(42,26,94,0); pointer-events:none;
+  transition:background .25s; z-index:998; }
+.bb-scrim.on{ background:rgba(42,26,94,.35); pointer-events:auto; }
+.bb-pop{ position:fixed; left:50%; bottom:76px; transform:translate(-50%,10px) scale(.96);
+  width:min(340px, calc(100% - 32px)); background:#fff; border:2px solid var(--purple);
+  border-radius:16px; padding:8px; box-shadow:0 16px 44px rgba(42,26,94,.35); opacity:0;
+  pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:999; }
+.bb-pop.on{ opacity:1; pointer-events:auto; transform:translate(-50%,0) scale(1); }
+.bb-pop-panel{ display:none; }
+.bb-pop-panel.on{ display:block; }
+.bb-pop-head{ display:flex; align-items:center; gap:8px; padding:8px 10px 10px; }
+.bb-pop-back{ font-family:'Oswald'; font-weight:600; font-size:11px; color:var(--muted); cursor:pointer; }
+.bb-pop-back:hover{ color:var(--purple); }
+.bb-pop-title{ font-family:'Anton', sans-serif; font-size:12px; text-transform:uppercase;
+  letter-spacing:.5px; color:var(--purple); }
+.bb-pop-item{ display:flex; align-items:center; justify-content:space-between; padding:12px 12px;
+  border-radius:10px; font-family:'Oswald'; font-size:13.5px; font-weight:600; color:var(--ink) !important;
+  text-decoration:none !important; cursor:pointer; transition:background .15s; }
+.bb-pop-item:hover{ background:var(--panel2); }
+.bb-pop-item .chev{ color:var(--muted); font-size:11px; }
+.bb-pop-item.leaf-active{ background:rgba(255,206,31,.22); }
+.bb-pop-item.leaf-active .lbl{ color:var(--purple-d); }
 
 /* sub-tabs (st.tabs) -> gold accent */
 [data-baseweb="tab-list"]{ border-bottom:2px solid var(--line) !important; }
@@ -223,19 +252,28 @@ button[data-baseweb="tab"][aria-selected="true"]{ color:var(--gold-d) !important
 
 /* ---------------- mobile ---------------- */
 @media (max-width: 640px){
+  /* hide Streamlit's own in-app chrome — the bottom bar is the site's only
+     nav here and this stuff just eats space over it. */
+  [data-testid="stToolbar"], [data-testid="stDecoration"],
+  [data-testid="stStatusWidget"], [data-testid="stAppDeployButton"],
+  #MainMenu, footer{ display:none !important; }
+
   .neon-logo{ font-size:40px !important; -webkit-text-stroke-width:2px; }
   .neon-tag{ font-size:8px; letter-spacing:4px; }
   [data-testid="stAppViewContainer"] .block-container{ padding-bottom:84px !important; }
   .bottom-bar-wrap{ bottom:10px; }
   .bottom-bar{ gap:0; padding:4px; }
-  .bb-logo{ display:none; }
   .navlink{ font-size:10px; padding:8px 11px !important; letter-spacing:.3px; }
+  .bb-pop{ bottom:68px; }
   h1{ font-size:1.5rem !important; }
   h2{ font-size:1.25rem !important; }
   h3{ font-size:1.15rem !important; }
-  .sneak{ height:28px; margin:0 8px 2px 0; }
   .block-container{ padding-left:.6rem !important; padding-right:.6rem !important; padding-top:2.5rem !important; }
   .neonwrap{ max-height:none !important; }
+
+  .khome .neon-logo{ font-size:24px; }
+  .topbar-chip{ padding:4px 10px 4px 4px; }
+  .topbar-chip .gstat{ gap:8px; }
 
   table.lb{ font-size:11px; }
   table.lb th{ padding:5px 5px; font-size:9px; }
@@ -249,9 +287,8 @@ button[data-baseweb="tab"][aria-selected="true"]{ color:var(--gold-d) !important
   .lb-odds th:nth-child(8), .lb-odds td:nth-child(8){ display:none; }
 
   .kcards{ grid-template-columns:1fr 1fr; gap:8px; }
-  .kcard{ min-height:auto; padding:8px 9px; }
-  .kcard h4{ font-size:13px; }
-  .kcard .kp{ font-size:12px; }
+  .kcard{ padding:10px 11px; }
+  .kcard .who{ font-size:14px; }
 
   table.dboard{ font-size:9px; }
   table.dboard th{ padding:3px 2px; font-size:8px; }
@@ -260,11 +297,19 @@ button[data-baseweb="tab"][aria-selected="true"]{ color:var(--gold-d) !important
   .db-rd{ font-size:10px; }
 
   .glance-stats{ gap:20px !important; }
-  .stepper .sub{ display:none; }
-  .cap-wrap{ overflow-x:auto; }
   .contract-grid{ grid-template-columns:1fr !important; }
-  .lot-label{ width:100px !important; }
-  .lot-label small{ display:none; }
+  details.team-details summary{ font-size:13px; padding:11px 13px; }
+  details.dc-row summary{ grid-template-columns:1.6rem 1fr; }
+  .dc-stat{ grid-column:1 / -1; text-align:left; margin-top:8px; }
+  .dc-bar{ margin-left:0; }
+
+  .trade-assets{ grid-template-columns:1fr; gap:10px; }
+
+  /* lottery bar rows: stack label above the bar, like kreeper's mobile fix */
+  .lot-head{ flex-direction:column; align-items:flex-start; gap:2px; }
+  .lot-row{ flex-wrap:wrap; row-gap:4px; }
+  .lot-label{ width:auto; flex:1 1 100%; }
+  .lot-track{ flex:1 1 auto; }
 }
 
 /* per-team collapsible contract-card sections — plain HTML <details>/<summary>
@@ -290,25 +335,6 @@ h2.two-tone{ background:none !important; border:none !important; box-shadow:none
 h2.two-tone, h2.two-tone *{ color:var(--purple) !important; }
 h2.two-tone .g{ -webkit-text-fill-color:transparent !important; }
 
-/* ---------------- season-phase stepper ---------------- */
-.stepper{ display:flex; align-items:flex-start; }
-.step{ flex:1; position:relative; text-align:center; }
-.step .dot{ width:30px; height:30px; border-radius:50%; margin:0 auto 8px; display:flex;
-  align-items:center; justify-content:center; font-family:'Anton', sans-serif; font-size:12px;
-  background:var(--panel2); border:2px solid var(--line); color:var(--muted); position:relative; z-index:2; }
-.step .line{ position:absolute; top:15px; left:-50%; width:100%; height:2px; background:var(--line); z-index:1; }
-.step:first-child .line{ display:none; }
-.step .lbl{ font-family:'Anton', sans-serif; font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); }
-.step .sub{ font-size:9.5px; color:var(--muted); opacity:.75; margin-top:2px; }
-.step.done .dot{ background:#1c9b63; border-color:#1c9b63; color:#fff; }
-.step.done .dot::after{ content:"\2713"; }
-.step.done .line{ background:#1c9b63; }
-.step.now .dot{ background:var(--gold); border-color:var(--gold-d); color:var(--purple-d);
-  box-shadow:0 0 0 4px rgba(255,206,31,.35); animation:step-pulse 2.2s ease-in-out infinite; }
-.step.now .lbl{ color:var(--purple); }
-@keyframes step-pulse{ 0%,100%{ box-shadow:0 0 0 4px rgba(255,206,31,.35);} 50%{ box-shadow:0 0 0 9px rgba(255,206,31,.08);} }
-@media (prefers-reduced-motion: reduce){ .step.now .dot{ animation:none !important; } }
-
 /* ---------------- glance panel: liquid-fill gauges ---------------- */
 .glance{ border:1px solid var(--gold-d); background:#fff; margin:14px 0 26px;
   padding:20px 26px; box-shadow:0 8px 26px rgba(75,45,159,.10); position:relative; }
@@ -330,17 +356,7 @@ h2.two-tone .g{ -webkit-text-fill-color:transparent !important; }
 @keyframes liq-back{ from{ transform:translateX(0);} to{ transform:translateX(200px);} }
 @media (prefers-reduced-motion: reduce){ .liq-wv.front, .liq-wv.back{ animation:none !important; } }
 
-/* ---------------- de-blocked capital table + lean chips ---------------- */
-.cap-wrap{ background:#fff; border:2px solid var(--gold); padding:6px 16px; box-shadow:0 8px 26px rgba(75,45,159,.10); }
-table.cap{ width:100%; border-collapse:collapse; font-family:'Oswald'; font-size:14px; }
-table.cap th{ text-align:left; font-family:'Anton'; font-weight:400; font-size:11.5px;
-  text-transform:uppercase; letter-spacing:1px; color:var(--muted); padding:0 10px 10px; border-bottom:2px solid var(--gold); }
-table.cap th.num{ text-align:right; }
-table.cap td{ padding:11px 10px; border-bottom:1px solid var(--line); color:var(--ink); }
-table.cap td.num{ text-align:right; font-variant-numeric:tabular-nums; }
-table.cap tr:hover td{ background:rgba(255,206,31,.10); }
-table.cap .rk{ font-family:'Anton'; color:var(--gold-d); width:26px; }
-table.cap .team{ font-weight:600; }
+/* ---------------- lean chips + value coloring (shared) ---------------- */
 .val-pos{ color:#1c9b63; font-weight:600; }
 .val-neg{ color:var(--red); font-weight:600; }
 .chip{ display:inline-block; font-family:'Anton'; font-size:10px; letter-spacing:.6px;
@@ -348,6 +364,28 @@ table.cap .team{ font-weight:600; }
 .chip.win-now{ background:rgba(28,155,99,.14); color:#1c9b63; border:1px solid rgba(28,155,99,.4); }
 .chip.rebuild{ background:rgba(214,51,108,.12); color:var(--red); border:1px solid rgba(214,51,108,.4); }
 .chip.balanced{ background:rgba(75,45,159,.08); color:var(--purple); border:1px solid rgba(75,45,159,.3); }
+
+/* ---------------- draft capital: ranked, expandable cards ---------------- */
+.dc-list{ display:flex; flex-direction:column; gap:10px; }
+details.dc-row{ background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden;
+  box-shadow:0 3px 10px rgba(75,45,159,.06); }
+details.dc-row summary{ list-style:none; cursor:pointer; display:grid;
+  grid-template-columns:2.2rem 1fr auto; align-items:center; gap:14px; padding:14px 18px;
+  transition:background .12s; }
+details.dc-row summary::-webkit-details-marker{ display:none; }
+details.dc-row summary:hover{ background:rgba(255,206,31,.08); }
+.dc-rank{ font-family:'Anton'; font-size:17px; color:var(--gold-d); text-align:center; }
+.dc-main b{ display:block; font-family:'Oswald'; font-weight:700; font-size:15px; color:var(--ink); }
+.dc-meta{ display:flex; gap:6px; flex-wrap:wrap; margin-top:7px; }
+.dc-stat{ text-align:right; min-width:110px; }
+.dc-stat b{ display:block; font-family:'Anton'; font-weight:400; font-size:19px; line-height:1; }
+.dc-stat small{ font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.dc-bar{ display:block; width:90px; height:5px; border-radius:3px; background:var(--panel2);
+  overflow:hidden; margin:6px 0 0 auto; }
+.dc-bar span{ display:block; height:100%; }
+.dc-bar span.val-pos{ background:#1c9b63; }
+.dc-bar span.val-neg{ background:var(--red); }
+.dc-body{ padding:2px 18px 18px; border-top:1px solid var(--line); margin-top:2px; }
 
 /* ---------------- contract cards (full browse grid) ---------------- */
 .kr-section{ margin-bottom:26px; }
@@ -385,7 +423,7 @@ table.cap .team{ font-weight:600; }
 .ccard .note{ font-size:11.5px; color:var(--muted); margin-top:1px; }
 
 /* ---------------- recent trades ---------------- */
-.trades-wrap{ background:#fff; border:2px solid var(--gold); padding:18px 24px; box-shadow:0 8px 26px rgba(75,45,159,.10); }
+.trades-wrap{ padding:6px 0; }
 .trade{ padding:15px 0; border-bottom:1px solid var(--line); }
 .trade:last-child{ border-bottom:none; padding-bottom:2px; }
 .trade-teams{ font-size:15px; font-weight:600; margin-bottom:10px; color:var(--ink); }
@@ -399,7 +437,10 @@ table.cap .team{ font-weight:600; }
 .trade-date{ font-size:10.5px; color:var(--muted); margin-top:10px; text-transform:uppercase; letter-spacing:.5px; }
 
 /* ---------------- lottery bars ---------------- */
-.lot-wrap{ background:#fff; border:2px solid var(--gold); padding:18px 24px; box-shadow:0 8px 26px rgba(75,45,159,.10); }
+.lot-wrap{ padding:12px 0 18px; border-top:1px solid var(--line); margin-bottom:8px; }
+.lot-head{ display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:14px; }
+.lot-head h4{ font-family:'Anton'; font-weight:400; font-size:16px; color:var(--purple-d); margin:0; letter-spacing:.3px; }
+.lot-eyebrow{ font-family:'Oswald'; font-weight:600; font-size:10.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
 .lot-row{ display:flex; align-items:center; gap:14px; padding:8px 0; }
 .lot-label{ width:170px; flex:0 0 auto; }
 .lot-label b{ display:block; font-size:13.5px; font-weight:600; color:var(--ink); }
@@ -411,30 +452,6 @@ table.cap .team{ font-weight:600; }
 .lot-pos{ width:26px; text-align:right; font-family:'Anton'; color:var(--gold-d); font-size:13px; }
 </style>
 """
-
-# A football "colourway" per section (echoes the old per-section icon idea).
-_SECTION_FILL = {
-    "top": "#ffce1f", "board": "#7a5bd8", "draft": "#ffce1f",
-    "adp": "#7a5bd8", "keepers": "#ffce1f", "rookies": "#7a5bd8",
-}
-
-
-def crt(key: str = "top") -> str:
-    """Section-header icon: a duotone football, gold or purple per section."""
-    fill = _SECTION_FILL.get(key, "#ffce1f")
-    seam = "#0a0712" if fill == "#ffce1f" else "#1c1140"
-    return (
-        f'<svg class="sneak" viewBox="0 0 72 44" xmlns="http://www.w3.org/2000/svg">'
-        f'<g transform="translate(36 22) rotate(-18)">'
-        f'<ellipse rx="33" ry="17" fill="{fill}"/>'
-        f'<ellipse rx="33" ry="17" fill="none" stroke="{seam}" stroke-width="2.5"/>'
-        f'<line x1="-13" y1="0" x2="13" y2="0" stroke="{seam}" stroke-width="2.5"/>'
-        f'<line x1="-9" y1="-4" x2="-9" y2="4" stroke="{seam}" stroke-width="2"/>'
-        f'<line x1="-1" y1="-5" x2="-1" y2="5" stroke="{seam}" stroke-width="2"/>'
-        f'<line x1="7" y1="-5" x2="7" y2="5" stroke="{seam}" stroke-width="2"/>'
-        f'</g></svg>'
-    )
-
 
 def headshot(pid: str) -> str:
     return SLEEPER_IMG.format(pid=pid)
@@ -456,67 +473,6 @@ def img_tag(pid: str, cls: str = "hs") -> str:
 def logo_html(size: int = 52, tag: str | None = "The Keeper Sportsource", text: str = "B&B") -> str:
     t = f'<div class="neon-tag">{tag}</div>' if tag else ""
     return (f'<div class="neon-logo" style="font-size:{size}px;">{text}</div>{t}')
-
-
-def _football(w: int, h: int, fill: str, bg: str) -> str:
-    seam = "#0a0712" if fill == GOLD else "#1c1140"
-    rot = -30 if w >= h else 58
-    return (
-        f'<svg viewBox="0 0 {w} {h}" preserveAspectRatio="xMidYMid slice">'
-        f'<rect width="{w}" height="{h}" fill="{bg}"/>'
-        f'<g transform="translate({w//2} {h//2}) rotate({rot})">'
-        f'<ellipse rx="{int(w*0.42)}" ry="{int(h*0.26)}" fill="{fill}"/>'
-        f'<ellipse rx="{int(w*0.42)}" ry="{int(h*0.26)}" fill="none" stroke="{seam}" stroke-width="3"/>'
-        f'<line x1="-16" y1="0" x2="16" y2="0" stroke="{seam}" stroke-width="3"/>'
-        f'<line x1="-11" y1="-5" x2="-11" y2="5" stroke="{seam}" stroke-width="2.4"/>'
-        f'<line x1="-2" y1="-6" x2="-2" y2="6" stroke="{seam}" stroke-width="2.4"/>'
-        f'<line x1="7" y1="-6" x2="7" y2="6" stroke="{seam}" stroke-width="2.4"/>'
-        f'</g></svg>'
-    )
-
-
-def masthead(name: str, tagline: str, vol: str, sub: str, px: str) -> str:
-    """Magazine masthead: brush-script league name + tagline, right issue block."""
-    return (
-        '<div class="eb-mast">'
-        f'<div>{logo_html(58, tagline, name)}</div>'
-        f'<div class="eb-issue"><div class="vol">{vol}</div>'
-        f'<div class="sub">{sub}</div><div class="px">{px}</div></div>'
-        '</div>'
-    )
-
-
-def hero(kicker: str, line1: str, line2: str, deck_html: str) -> str:
-    """Cover-style hero band: big headline + football cut-outs. (The section
-    label tags were removed — the top nav already links to those pages.)"""
-    cuts = (
-        f'<div class="cut a">{_football(128, 108, GOLD, "#ece5fb")}</div>'
-        f'<div class="cut b">{_football(108, 134, PURPLE, GOLD)}</div>'
-        f'<div class="cut c">{_football(136, 108, GOLD, "#ece5fb")}</div>'
-    )
-    return (
-        '<div class="eb-hero"><div class="eb-hwrap">'
-        f'<div class="eb-left"><div class="kicker">{kicker}</div>'
-        f'<div class="eb-headline"><div class="l1">{line1}</div><div class="l2">{line2}</div></div>'
-        f'<div class="eb-deck">{deck_html}</div></div>'
-        f'<div class="eb-cuts">{cuts}</div>'
-        '</div></div>'
-    )
-
-
-def bottom_nav_html(sections: list, current: str) -> str:
-    """Fixed bottom pill nav: B&B mark + section links. `sections` is
-    [(key, label), ...]; `current` is the active section key."""
-    links = "".join(
-        f'<a class="navlink{" active" if k == current else ""}" href="?p={k}" target="_self">{label}</a>'
-        for k, label in sections
-    )
-    return (
-        '<div class="bottom-bar-wrap"><div class="bottom-bar">'
-        '<a class="bb-logo" href="?p=home" target="_self">'
-        + logo_html(20, None, "B&amp;B") + '</a>'
-        + links + '</div></div>'
-    )
 
 
 def _wave_d(amp: float, phase: float, second: float = 0.45) -> str:
@@ -578,32 +534,6 @@ def liquid_stat_html(pct: float, value_html: str, ring_label: str, label: str, s
     return (f'<div class="gstat">{ring}'
             f'<div class="txt"><div class="lbl">{label}</div>'
             + (f'<div class="sub">{sub}</div>' if sub else '') + '</div></div>')
-
-
-def phase_stepper_html(current: str, keeper_sub: str = "", draft_sub: str = "") -> str:
-    """Horizontal season-phase progress. `current` is one of
-    kreeper.phase.PHASES; a synthetic "draft_event" milestone is inserted
-    between pre_draft and pre_season so the draft gets its own node."""
-    order = ["keepers_open", "pre_draft", "draft_event", "pre_season", "in_season", "offseason"]
-    labels = {
-        "keepers_open": ("Keepers", keeper_sub),
-        "pre_draft": ("Draft Prep", ""),
-        "draft_event": ("Draft", draft_sub),
-        "pre_season": ("Pre-Season", ""),
-        "in_season": ("In-Season", ""),
-        "offseason": ("Offseason", ""),
-    }
-    cur_idx = order.index(current) if current in order else 1
-    cells = []
-    for i, key in enumerate(order):
-        label, sub = labels[key]
-        state = "done" if i < cur_idx else ("now" if i == cur_idx else "")
-        dot = "" if state == "done" else ("●" if state == "now" else str(i + 1))
-        cells.append(
-            f'<div class="step {state}"><div class="line"></div><div class="dot">{dot}</div>'
-            f'<div class="lbl">{label}</div><div class="sub">{sub}</div></div>'
-        )
-    return '<div class="stepper">' + "".join(cells) + '</div>'
 
 
 def inject(st) -> None:
