@@ -810,23 +810,6 @@ def _leaderboard_html(df) -> str:
             + "".join(rows) + '</tbody></table></div>')
 
 
-def _last_season_champ():
-    """(champ name, season year) for the most recently COMPLETED season, or
-    None if there isn't one yet. Uses only pre-existing sleeper.* functions."""
-    from kreeper import sleeper
-    chain = sleeper.league_chain(LEAGUE["sleeper_league_id"])
-    prior = sorted((c for c in chain if c["season"] != SEASON),
-                   key=lambda c: -int(c["season"]))
-    if not prior:
-        return None
-    lid = prior[0]["league_id"]
-    r2o = {int(r["roster_id"]): str(r.get("owner_id")) for r in sleeper.get_rosters(lid)}
-    for m in sleeper.get_winners_bracket(lid):
-        if m.get("p") == 1 and m.get("w") is not None:
-            return config.manager_name(r2o.get(int(m["w"]))), prior[0]["season"]
-    return None
-
-
 def _biggest_adp_mover(top_n: int = 50, window_days: int = 30):
     """The single largest ADP-rank move among currently top-`top_n` players
     over the last `window_days`, or None if there's not enough history yet."""
@@ -838,8 +821,8 @@ def _biggest_adp_mover(top_n: int = 50, window_days: int = 30):
 
 
 def render_home_glance() -> None:
-    """Three quick-glance liquid-fill stats: this year's title favorite, last
-    season's champ, and the biggest ADP mover inside the realistic draft pool."""
+    """Quick-glance liquid-fill stats: this year's title favorite and the
+    biggest ADP mover inside the realistic draft pool."""
     stats = []
 
     try:
@@ -851,13 +834,6 @@ def render_home_glance() -> None:
         stats.append(theme.liquid_stat_html(
             top["Win %"] / 100, f'{top["Win %"]:g}%', "Win",
             "Title Favorite", top["Team"],
-        ))
-
-    champ = _last_season_champ()
-    if champ:
-        name, yr = champ
-        stats.append(theme.liquid_stat_html(
-            0.92, str(yr), "champ", "Reigning Champ", name,
         ))
 
     mover = _biggest_adp_mover()
@@ -2612,9 +2588,25 @@ def render_bottom_bar() -> None:
     # reach through to window.parent.document and inject the bar directly
     # into the real page — that's also the only way position:fixed ends up
     # anchored to the actual viewport instead of a tiny iframe box.
+    #
+    # Streamlit Community Cloud's own chrome (the crown badge for signed-out
+    # visitors, the "Manage app"/profile-avatar badge for the owner) renders
+    # in Cloud's outer wrapper page, a level further out than the app iframe
+    # — hiding it needs window.top specifically (the one target that always
+    # reaches the true outermost page) rather than window.parent.
     components.html(
         "<script>(function(){"
         "const doc = window.parent.document;"
+        "const topDoc = window.top.document;"
+        "if (!topDoc.getElementById('bb-hide-cloud-chrome')) {"
+        "  const s = topDoc.createElement('style');"
+        "  s.id = 'bb-hide-cloud-chrome';"
+        "  s.textContent = '[class*=\"viewerBadge\"], [class*=\"profileContainer\"], "
+        "[class*=\"profilePreview\"], [data-testid=\"manage-app-button\"], "
+        "a[href=\"https://streamlit.io/cloud\"], a[href*=\"share.streamlit.io\"]"
+        "{ display:none !important; }';"
+        "  topDoc.head.appendChild(s);"
+        "}"
         "const old = doc.getElementById('bb-bottom-bar-root');"
         "if (old) old.remove();"
         "const root = doc.createElement('div');"

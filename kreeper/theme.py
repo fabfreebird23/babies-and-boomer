@@ -194,12 +194,10 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .status-line .muted{ color:var(--muted); font-weight:500; text-transform:none; letter-spacing:0; }
 
 @media (max-width: 640px){
-  /* the chip drops out of the corner and stacks above the wordmark instead
-     — a fixed top-right pin doesn't leave enough room next to a centered
-     30px script logo on a narrow screen. */
-  .kbar{ padding-top:10px; }
-  .topbar-chip{ position:static; margin:0 auto 8px; }
-  .topbar-chip .gstat .txt .sub{ display:none; }
+  /* the phase chip drops out entirely on mobile — Home already echoes the
+     same phase info in its status-line, and a fixed top-right pin doesn't
+     leave enough room next to a centered 30px script logo besides. */
+  .topbar-chip{ display:none; }
 }
 
 /* fixed bottom pill nav — replaces the old static top bar. Leave room at
@@ -214,7 +212,8 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .navlink{ font-family:'Anton'; text-transform:uppercase; letter-spacing:.6px; font-size:12px;
   color:var(--purple) !important; text-decoration:none !important; padding:9px 16px !important;
   border-radius:999px !important; border:none !important; background:none; transition:opacity .2s, background .2s;
-  white-space:nowrap; opacity:.72; cursor:pointer; }
+  white-space:nowrap; opacity:.72; cursor:pointer; touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent; user-select:none; }
 .navlink:hover{ opacity:1; }
 .navlink.active{ opacity:1; background:var(--gold); color:var(--purple-d) !important; }
 
@@ -232,13 +231,15 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .bb-pop-panel{ display:none; }
 .bb-pop-panel.on{ display:block; }
 .bb-pop-head{ display:flex; align-items:center; gap:8px; padding:8px 10px 10px; }
-.bb-pop-back{ font-family:'Oswald'; font-weight:600; font-size:11px; color:var(--muted); cursor:pointer; }
+.bb-pop-back{ font-family:'Oswald'; font-weight:600; font-size:11px; color:var(--muted); cursor:pointer;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .bb-pop-back:hover{ color:var(--purple); }
 .bb-pop-title{ font-family:'Anton', sans-serif; font-size:12px; text-transform:uppercase;
   letter-spacing:.5px; color:var(--purple); }
 .bb-pop-item{ display:flex; align-items:center; justify-content:space-between; padding:12px 12px;
   border-radius:10px; font-family:'Oswald'; font-size:13.5px; font-weight:600; color:var(--ink) !important;
-  text-decoration:none !important; cursor:pointer; transition:background .15s; }
+  text-decoration:none !important; cursor:pointer; transition:background .15s;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .bb-pop-item:hover{ background:var(--panel2); }
 .bb-pop-item .chev{ color:var(--muted); font-size:11px; }
 .bb-pop-item.leaf-active{ background:rgba(255,206,31,.22); }
@@ -251,67 +252,6 @@ button[data-baseweb="tab"] [data-testid="stMarkdownContainer"] p{ font-family:'A
 button[data-baseweb="tab"][aria-selected="true"]{ color:var(--gold-d) !important; }
 
 /* ---------------- mobile ---------------- */
-@media (max-width: 640px){
-  /* hide Streamlit's own in-app chrome — the bottom bar is the site's only
-     nav here and this stuff just eats space over it. */
-  [data-testid="stToolbar"], [data-testid="stDecoration"],
-  [data-testid="stStatusWidget"], [data-testid="stAppDeployButton"],
-  #MainMenu, footer{ display:none !important; }
-
-  .neon-logo{ font-size:40px !important; -webkit-text-stroke-width:2px; }
-  .neon-tag{ font-size:8px; letter-spacing:4px; }
-  [data-testid="stAppViewContainer"] .block-container{ padding-bottom:84px !important; }
-  .bottom-bar-wrap{ bottom:10px; }
-  .bottom-bar{ gap:0; padding:4px; }
-  .navlink{ font-size:10px; padding:8px 11px !important; letter-spacing:.3px; }
-  .bb-pop{ bottom:68px; }
-  h1{ font-size:1.5rem !important; }
-  h2{ font-size:1.25rem !important; }
-  h3{ font-size:1.15rem !important; }
-  .block-container{ padding-left:.6rem !important; padding-right:.6rem !important; padding-top:2.5rem !important; }
-  .neonwrap{ max-height:none !important; }
-
-  .khome .neon-logo{ font-size:24px; }
-  .topbar-chip{ padding:4px 10px 4px 4px; }
-  .topbar-chip .gstat{ gap:8px; }
-
-  table.lb{ font-size:11px; }
-  table.lb th{ padding:5px 5px; font-size:9px; }
-  table.lb td{ padding:4px 5px; }
-  .hs{ width:24px; height:24px; margin-right:5px; }
-  .lb .rk{ width:20px; }
-  .lb .kept-badge, .lb .rk-badge{ font-size:8px; padding:1px 4px; margin-left:3px; }
-  .lb-value th:nth-child(5), .lb-value td:nth-child(5),
-  .lb-value th:nth-child(7), .lb-value td:nth-child(7){ display:none; }
-  .lb-rook th:nth-child(6), .lb-rook td:nth-child(6){ display:none; }
-  .lb-odds th:nth-child(8), .lb-odds td:nth-child(8){ display:none; }
-
-  .kcards{ grid-template-columns:1fr 1fr; gap:8px; }
-  .kcard{ padding:10px 11px; }
-  .kcard .who{ font-size:14px; }
-
-  table.dboard{ font-size:9px; }
-  table.dboard th{ padding:3px 2px; font-size:8px; }
-  .dbcell{ height:auto; }
-  table.dboard td.dbcell{ padding:2px 3px; }
-  .db-rd{ font-size:10px; }
-
-  .glance-stats{ gap:20px !important; }
-  .contract-grid{ grid-template-columns:1fr !important; }
-  details.team-details summary{ font-size:13px; padding:11px 13px; }
-  details.dc-row summary{ grid-template-columns:1.6rem 1fr; }
-  .dc-stat{ grid-column:1 / -1; text-align:left; margin-top:8px; }
-  .dc-bar{ margin-left:0; }
-
-  .trade-assets{ grid-template-columns:1fr; gap:10px; }
-
-  /* lottery bar rows: stack label above the bar, like kreeper's mobile fix */
-  .lot-head{ flex-direction:column; align-items:flex-start; gap:2px; }
-  .lot-row{ flex-wrap:wrap; row-gap:4px; }
-  .lot-label{ width:auto; flex:1 1 100%; }
-  .lot-track{ flex:1 1 auto; }
-}
-
 /* per-team collapsible contract-card sections — plain HTML <details>/<summary>
    instead of st.expander, so each one can carry its own accent color. */
 details.team-details{ border:1px solid var(--line); border-left:4px solid var(--purple);
@@ -370,7 +310,7 @@ h2.two-tone .g{ -webkit-text-fill-color:transparent !important; }
 details.dc-row{ background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden;
   box-shadow:0 3px 10px rgba(75,45,159,.06); }
 details.dc-row summary{ list-style:none; cursor:pointer; display:grid;
-  grid-template-columns:2.2rem 1fr auto; align-items:center; gap:14px; padding:14px 18px;
+  grid-template-columns:2.2rem 1fr auto; align-items:start; gap:14px; padding:14px 18px;
   transition:background .12s; }
 details.dc-row summary::-webkit-details-marker{ display:none; }
 details.dc-row summary:hover{ background:rgba(255,206,31,.08); }
@@ -450,6 +390,70 @@ details.dc-row summary:hover{ background:rgba(255,206,31,.08); }
   display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:10.5px;
   color:#fff; font-weight:600; font-variant-numeric:tabular-nums; min-width:2px; }
 .lot-pos{ width:26px; text-align:right; font-family:'Anton'; color:var(--gold-d); font-size:13px; }
+
+/* ---------------- mobile ---------------- */
+/* Kept last in the stylesheet on purpose: every rule in here overrides a
+   same-specificity base rule declared earlier (e.g. table.lb, .dc-stat,
+   .lot-row), and CSS breaks ties by source order, not by media-query
+   presence — a mobile override placed before its base rule loses. */
+@media (max-width: 640px){
+  /* hide Streamlit's own in-app chrome — the bottom bar is the site's only
+     nav here and this stuff just eats space over it. */
+  [data-testid="stToolbar"], [data-testid="stDecoration"],
+  [data-testid="stStatusWidget"], [data-testid="stAppDeployButton"],
+  #MainMenu, footer{ display:none !important; }
+
+  .neon-logo{ font-size:40px !important; -webkit-text-stroke-width:2px; }
+  .neon-tag{ font-size:8px; letter-spacing:4px; }
+  [data-testid="stAppViewContainer"] .block-container{ padding-bottom:84px !important; }
+  .bottom-bar-wrap{ bottom:10px; }
+  .bottom-bar{ gap:0; padding:4px; }
+  .navlink{ font-size:10px; padding:8px 11px !important; letter-spacing:.3px; }
+  .bb-pop{ bottom:68px; }
+  h1{ font-size:1.5rem !important; }
+  h2{ font-size:1.25rem !important; }
+  h3{ font-size:1.15rem !important; }
+  .block-container{ padding-left:.6rem !important; padding-right:.6rem !important; padding-top:2.5rem !important; }
+  .neonwrap{ max-height:none !important; }
+
+  .khome .neon-logo{ font-size:24px; }
+
+  table.lb{ font-size:11px; }
+  table.lb th{ padding:5px 5px; font-size:9px; }
+  table.lb td{ padding:4px 5px; }
+  .hs{ width:24px; height:24px; margin-right:5px; }
+  .lb .rk{ width:20px; }
+  .lb .kept-badge, .lb .rk-badge{ font-size:8px; padding:1px 4px; margin-left:3px; }
+  .lb-value th:nth-child(5), .lb-value td:nth-child(5),
+  .lb-value th:nth-child(7), .lb-value td:nth-child(7){ display:none; }
+  .lb-rook th:nth-child(6), .lb-rook td:nth-child(6){ display:none; }
+  .lb-odds th:nth-child(8), .lb-odds td:nth-child(8){ display:none; }
+
+  .kcards{ grid-template-columns:1fr 1fr; gap:8px; }
+  .kcard{ padding:10px 11px; }
+  .kcard .who{ font-size:14px; }
+
+  table.dboard{ font-size:9px; }
+  table.dboard th{ padding:3px 2px; font-size:8px; }
+  .dbcell{ height:auto; }
+  table.dboard td.dbcell{ padding:2px 3px; }
+  .db-rd{ font-size:10px; }
+
+  .glance-stats{ gap:20px !important; }
+  .contract-grid{ grid-template-columns:1fr !important; }
+  details.team-details summary{ font-size:13px; padding:11px 13px; }
+  details.dc-row summary{ grid-template-columns:1.6rem 1fr; padding:12px 14px; }
+  .dc-stat{ grid-column:1 / -1; text-align:left; margin-top:8px; }
+  .dc-bar{ margin:6px 0 0; }
+
+  .trade-assets{ grid-template-columns:1fr; gap:10px; }
+
+  /* lottery bar rows: stack label above the bar, like kreeper's mobile fix */
+  .lot-head{ flex-direction:column; align-items:flex-start; gap:2px; }
+  .lot-row{ flex-wrap:wrap; row-gap:4px; }
+  .lot-label{ width:auto; flex:1 1 100%; }
+  .lot-track{ flex:1 1 auto; }
+}
 </style>
 """
 
