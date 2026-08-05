@@ -18,7 +18,7 @@ league:
   # After this moment, "Set My Keepers" goes read-only (the board stays visible).
   # Local wall-clock time in keeper_timezone below (DST handled automatically).
   # Leave blank/remove for no deadline.
-  keeper_deadline:       # not set yet — submissions stay open
+  keeper_deadline: "2026-08-01T00:00:00"
   keeper_timezone: "America/Indiana/Indianapolis"  # Indiana Eastern (EST/EDT)
 
 # 2026 draft order (slot 1 picks first), drawn in Sleeper. Owner IDs in pick order.
