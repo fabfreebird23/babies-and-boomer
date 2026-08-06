@@ -2516,41 +2516,29 @@ INSEASON_LEAVES = {
 
 def _group_popover_html(pop_id: str, section_label: str, groups: list,
                          leaves_by_group: dict, page_key: str) -> str:
-    """A group->leaf drill-down sheet for one bottom-bar section — tap a
-    group (e.g. "Draft") to see its leaves, or back out to pick another
-    group. Shared by Pre-Season and In-Season, the two sections with more
-    than one level of sub-pages."""
-    cur_g = st.query_params.get("g", groups[0][0])
-    if cur_g not in leaves_by_group:
-        cur_g = groups[0][0]
+    """One flat sheet for a bottom-bar section — every leaf listed directly
+    under a plain (non-tappable) group label, one tap from the bar to any
+    page. Shared by Pre-Season and In-Season."""
+    cur_g = st.query_params.get("g", "")
     cur_t = st.query_params.get("t", "")
 
-    def leaf_links(leaves, **params):
+    def leaf_links(leaves, gk):
         return "".join(
-            f'<a class="bb-pop-item{" leaf-active" if page == params["p"] and params.get("g") == cur_g and cur_t == k else ""}" '
-            f'href="?{"&".join(f"{kk}={vv}" for kk, vv in {**params, "t": k}.items())}" target="_self">'
+            f'<a class="bb-pop-item{" leaf-active" if page == page_key and cur_g == gk and cur_t == k else ""}" '
+            f'href="?p={page_key}&g={gk}&t={k}" target="_self">'
             f'<span class="lbl">{label}</span></a>'
             for k, label in leaves
         )
 
-    leaf_panels = "".join(
-        f'<div class="bb-pop-panel{" on" if gk == cur_g else ""}" data-panel="{pop_id}-{gk}">'
-        f'<div class="bb-pop-head"><span class="bb-pop-back" data-show="{pop_id}-root">&larr; {section_label}</span>'
-        f'<span class="bb-pop-title">{glabel}</span></div>'
-        + leaf_links(leaves_by_group[gk], p=page_key, g=gk)
-        + '</div>'
-        for gk, glabel in groups
-    )
-    root_items = "".join(
-        f'<div class="bb-pop-item" data-show="{pop_id}-{gk}"><span class="lbl">{glabel}</span>'
-        f'<span class="chev">{len(leaves_by_group[gk])} &rsaquo;</span></div>'
+    sections = "".join(
+        f'<div class="bb-sec-label">{glabel}</div>' + leaf_links(leaves_by_group[gk], gk)
         for gk, glabel in groups
     )
     return (
         f'<div class="bb-pop" id="bb-pop-{pop_id}">'
-        f'<div class="bb-pop-panel" data-panel="{pop_id}-root"><div class="bb-pop-head">'
-        f'<span class="bb-pop-title">{section_label}</span></div>' + root_items + '</div>'
-        + leaf_panels + '</div>'
+        f'<div class="bb-pop-head"><span class="bb-pop-title">{section_label}</span></div>'
+        f'<div class="bb-pop-list">{sections}</div>'
+        f'</div>'
     )
 
 
@@ -2611,13 +2599,6 @@ def render_bottom_bar() -> None:
         "    const wasOn = pop.classList.contains('on');"
         "    closeAll();"
         "    if (!wasOn){ pop.classList.add('on'); scrim.classList.add('on'); }"
-        "  });"
-        "});"
-        "doc.querySelectorAll('[data-show]').forEach(function(el){"
-        "  el.addEventListener('click', function(){"
-        "    const pop = el.closest('.bb-pop');"
-        "    pop.querySelectorAll('.bb-pop-panel').forEach(p=>p.classList.remove('on'));"
-        "    pop.querySelector('[data-panel=\"'+el.dataset.show+'\"]').classList.add('on');"
         "  });"
         "});"
         "scrim.addEventListener('click', closeAll);"

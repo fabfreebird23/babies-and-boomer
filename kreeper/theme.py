@@ -211,20 +211,19 @@ table.dboard td.dbcell{ padding:3px 4px; }
   border-radius:16px; padding:8px; box-shadow:0 16px 44px rgba(42,26,94,.35); opacity:0;
   pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:999; }
 .bb-pop.on{ opacity:1; pointer-events:auto; transform:translate(-50%,0) scale(1); }
-.bb-pop-panel{ display:none; }
-.bb-pop-panel.on{ display:block; }
 .bb-pop-head{ display:flex; align-items:center; gap:8px; padding:8px 10px 10px; }
-.bb-pop-back{ font-family:'Oswald'; font-weight:600; font-size:11px; color:var(--muted); cursor:pointer;
-  touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-.bb-pop-back:hover{ color:var(--purple); }
 .bb-pop-title{ font-family:'Anton', sans-serif; font-size:12px; text-transform:uppercase;
   letter-spacing:.5px; color:var(--purple); }
-.bb-pop-item{ display:flex; align-items:center; justify-content:space-between; padding:12px 12px;
+/* every leaf in the section, one flat list — no group-then-leaf drill-down */
+.bb-pop-list{ max-height:min(360px, 60vh); overflow-y:auto; }
+.bb-sec-label{ font-family:'Anton', sans-serif; font-size:10.5px; font-weight:400;
+  letter-spacing:.6px; text-transform:uppercase; color:var(--gold-d); padding:10px 12px 3px; }
+.bb-sec-label:first-child{ padding-top:4px; }
+.bb-pop-item{ display:block; padding:10px 12px;
   border-radius:10px; font-family:'Oswald'; font-size:13.5px; font-weight:600; color:var(--ink) !important;
   text-decoration:none !important; cursor:pointer; transition:background .15s;
   touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .bb-pop-item:hover{ background:var(--panel2); }
-.bb-pop-item .chev{ color:var(--muted); font-size:11px; }
 .bb-pop-item.leaf-active{ background:rgba(255,206,31,.22); }
 .bb-pop-item.leaf-active .lbl{ color:var(--purple-d); }
 
