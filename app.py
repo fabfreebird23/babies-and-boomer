@@ -2468,12 +2468,10 @@ def _live_draft_body() -> None:
     picks: dict = record.get("picks", {})
 
     ordered = sorted(cells.items(), key=lambda kv: kv[1]["pick_no"])
-    onclock = None  # (round, slot, cell)
-    for (r, slot), c in ordered:
-        if (r, slot) in keeper_cell or str(c["pick_no"]) in picks:
-            continue
-        onclock = (r, slot, c)
-        break
+    open_slots = [(r, slot, c) for (r, slot), c in ordered
+                  if (r, slot) not in keeper_cell and str(c["pick_no"]) not in picks]
+    onclock = open_slots[0] if open_slots else None
+    on_deck = open_slots[1:4]  # next few picks, for the "on deck" preview
 
     total_picks = teams * rounds
     made = len(keeper_cell) + len(picks)
@@ -2485,9 +2483,14 @@ def _live_draft_body() -> None:
         team = c["owner_name"]
         trade_note = (f' <span style="font-size:12px;color:var(--gold-d);font-weight:400;">'
                       f'(traded from {c["base_short"]})</span>' if c.get("traded") else "")
+        deck_html = ""
+        if on_deck:
+            names = " &rarr; ".join(f'<b>{dr[2]["owner_name"]}</b>' for dr in on_deck)
+            deck_html = f'<div class="meta">On deck: {names}</div>'
         st.markdown(
             f'<div class="ld-clock"><div><div class="who">On the clock: {team}{trade_note}</div>'
-            f'<div class="meta">Round {r}, Pick {c["pick_no"]} (slot {slot})</div></div>'
+            f'<div class="meta">Round {r}, Pick {c["pick_no"]} (slot {slot})</div>'
+            f'{deck_html}</div>'
             f'<div class="badge">{made}/{total_picks} picks in</div></div>',
             unsafe_allow_html=True,
         )
