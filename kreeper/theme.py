@@ -118,16 +118,18 @@ table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-famil
   filter:grayscale(1) contrast(1.05) sepia(.55) hue-rotate(205deg) saturate(1.9) brightness(1.02);
   transition:filter .15s; }
 .hs:hover{ filter:none; }
-/* same duotone treatment, sized down for the draft grid's tight cells —
-   round instead of the site's usual rounded-square, with a solid white
-   ring so a position-tinted cell background never bleeds into the photo. */
-.hs-sm{ width:26px; height:26px; border-radius:50%; object-fit:cover; flex:none;
-  background:#ece5fb; border:2px solid #fff; box-shadow:0 0 0 1.5px var(--gold-d);
-  filter:grayscale(1) contrast(1.05) sepia(.55) hue-rotate(205deg) saturate(1.9) brightness(1.02); }
-.dbplayer{ display:flex; align-items:center; gap:6px; margin-top:2px; width:100%; }
-.dbplayer-txt{ min-width:0; line-height:1.15; flex:1 1 auto; }
+/* Round, full-color (no duotone) at this size — the stylized filter reads
+   fine at 32px+ elsewhere on the site but turns to mush at grid size. A
+   two-layer ring (solid white, then a dark hairline outside it) keeps the
+   photo visually separated from the cell's tint no matter how pale that
+   tint is — a single white ring nearly disappears against a light tint. */
+.hs-sm{ width:32px; height:32px; border-radius:50%; object-fit:cover; flex:none;
+  background:#ece5fb; border:2px solid #fff;
+  box-shadow:0 0 0 1px rgba(42,26,94,.4); }
+.dbplayer{ display:flex; align-items:center; gap:7px; margin-top:3px; width:100%; }
+.dbplayer-txt{ min-width:0; line-height:1.2; flex:1 1 auto; }
 .dbplayer-txt b{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
-  overflow:hidden; font-size:10.5px; font-weight:700; white-space:normal; }
+  overflow:hidden; font-size:11.5px; font-weight:700; white-space:normal; }
 .dbplayer-txt .pos{ font-size:9px; white-space:nowrap; }
 .posdot{ display:inline-block; width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;}
 .p-QB{background:var(--gold-d);} .p-RB{background:var(--purple-l);} .p-WR{background:var(--cyan);} .p-TE{background:var(--red);}
@@ -158,7 +160,7 @@ table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-famil
 table.dboard{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:'Oswald'; font-size:12px; }
 table.dboard th{ background:var(--gold); color:var(--purple-d); text-align:center; font-family:'Anton'; font-weight:400;
   font-size:11px; padding:5px; border:1px solid #fff; text-transform:uppercase; letter-spacing:1px; }
-.dbcell{ border:1px solid var(--line); padding:3px 4px; vertical-align:top; height:56px; }
+.dbcell{ border:1px solid var(--line); padding:4px 5px; vertical-align:top; height:64px; }
 table.dboard td.dbcell{ padding:3px 4px; }
 .dbpick{ color:var(--muted); font-size:9px; white-space:nowrap; }
 .db-base{ background:#faf7ff; color:#8a7fb3; }

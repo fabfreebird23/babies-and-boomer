@@ -2222,12 +2222,24 @@ _POS_COLOR = {"QB": "var(--gold-d)", "RB": "var(--purple-l)", "WR": "var(--cyan)
 _POS_RGB = {"QB": "201,151,0", "RB": "122,91,216", "WR": "35,144,192", "TE": "214,51,108"}
 
 
+def _clean_pos(pos) -> str:
+    """A stray NaN (a consensus-ADP row with no position for some
+    source combination) stored straight into a logged pick renders as the
+    literal string "nan" otherwise — pandas/JSON round-trip a float NaN
+    right through an f-string. Anything that isn't a real position string
+    becomes "", not text."""
+    return pos if isinstance(pos, str) and pos.upper() in _POS_COLOR else ""
+
+
 def _pos_span(pos: str) -> str:
     """A player's position, colored to match the posdot convention used
     everywhere else (ADP tables, contract cards) — lets a positional run
     jump out while scanning the draft grid instead of every filled cell
     reading as the same flat color."""
-    return f'<span style="font-weight:700;color:{_POS_COLOR.get(pos, "var(--muted)")};">{pos}</span>'
+    pos = _clean_pos(pos)
+    if not pos:
+        return ""
+    return f'<span style="font-weight:700;color:{_POS_COLOR[pos]};">{pos}</span>'
 
 
 def _pos_cell_style(pos: str) -> str:
@@ -2235,7 +2247,7 @@ def _pos_cell_style(pos: str) -> str:
     hues as _pos_span, now as the cell's own background/ring instead of
     just the position label, so a positional run is visible at a glance
     across the whole grid, not just on close reading."""
-    rgb = _POS_RGB.get(pos)
+    rgb = _POS_RGB.get(_clean_pos(pos))
     if not rgb:
         return ""
     return f'background:rgba({rgb},.16);box-shadow:inset 0 0 0 1px rgba({rgb},.45);color:var(--ink);'
@@ -2559,7 +2571,8 @@ def _live_draft_body() -> None:
                 nfl = (H.players.get(pid, {}) or {}).get("team") if pid else ""
                 picks[str(c["pick_no"])] = {
                     "player_id": pid, "player_name": row["name"],
-                    "position": row["position"], "nfl": nfl or "",
+                    "position": row["position"] if pd.notna(row["position"]) else "",
+                    "nfl": nfl or "",
                 }
                 record["picks"] = picks
                 record["season"] = SEASON
