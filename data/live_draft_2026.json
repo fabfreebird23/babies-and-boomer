@@ -1,17 +1,1 @@
-{
-  "picks": {
-    "1": {
-      "player_id": "",
-      "player_name": "49ers D/ST",
-      "position": "DST",
-      "nfl": ""
-    },
-    "2": {
-      "player_id": "11603",
-      "player_name": "AJ Barner",
-      "position": "TE",
-      "nfl": "SEA"
-    }
-  },
-  "season": 2026
-}
+{}
