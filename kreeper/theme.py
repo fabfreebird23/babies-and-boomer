@@ -118,13 +118,16 @@ table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-famil
   filter:grayscale(1) contrast(1.05) sepia(.55) hue-rotate(205deg) saturate(1.9) brightness(1.02);
   transition:filter .15s; }
 .hs:hover{ filter:none; }
-/* same duotone treatment, sized down for the draft grid's tight cells */
-.hs-sm{ width:22px; height:22px; border-radius:4px; object-fit:cover; flex:none;
-  background:#ece5fb; border:1.5px solid var(--gold-d);
+/* same duotone treatment, sized down for the draft grid's tight cells —
+   round instead of the site's usual rounded-square, with a solid white
+   ring so a position-tinted cell background never bleeds into the photo. */
+.hs-sm{ width:26px; height:26px; border-radius:50%; object-fit:cover; flex:none;
+  background:#ece5fb; border:2px solid #fff; box-shadow:0 0 0 1.5px var(--gold-d);
   filter:grayscale(1) contrast(1.05) sepia(.55) hue-rotate(205deg) saturate(1.9) brightness(1.02); }
-.dbplayer{ display:flex; align-items:center; gap:5px; margin-top:2px; }
-.dbplayer-txt{ min-width:0; line-height:1.2; }
-.dbplayer-txt b{ display:block; font-size:10.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dbplayer{ display:flex; align-items:center; gap:6px; margin-top:2px; width:100%; }
+.dbplayer-txt{ min-width:0; line-height:1.15; flex:1 1 auto; }
+.dbplayer-txt b{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+  overflow:hidden; font-size:10.5px; font-weight:700; white-space:normal; }
 .dbplayer-txt .pos{ font-size:9px; white-space:nowrap; }
 .posdot{ display:inline-block; width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;}
 .p-QB{background:var(--gold-d);} .p-RB{background:var(--purple-l);} .p-WR{background:var(--cyan);} .p-TE{background:var(--red);}
