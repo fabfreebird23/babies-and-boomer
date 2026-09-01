@@ -2241,6 +2241,18 @@ def _pos_cell_style(pos: str) -> str:
     return f'background:rgba({rgb},.16);box-shadow:inset 0 0 0 1px rgba({rgb},.45);color:var(--ink);'
 
 
+def _dbplayer_html(pid: str, name: str, pos: str, extra: str = "") -> str:
+    """Small headshot + stacked name/position, the same treatment headshots
+    already get everywhere else on the site (leaderboards, ADP, contract
+    cards) — just sized down for the draft grid's tight cells. No pid (a
+    D/ST or kicker pick, which the ADP/name index doesn't resolve) just
+    skips the photo rather than showing a broken image. `extra` (a rookie-
+    keeper badge, a cross-team owner tag) rides along in the text stack."""
+    img = theme.img_tag(pid, cls="hs-sm") if pid else ""
+    return (f'<div class="dbplayer">{img}<div class="dbplayer-txt">'
+            f'<b>{name}</b><span class="pos">{_pos_span(pos)}{extra}</span></div></div>')
+
+
 def _board_cell_html(c: dict, keepers: list) -> str:
     pick = f'<span class="dbpick">#{c["pick_no"]}</span>'
     if keepers:
@@ -2250,15 +2262,15 @@ def _board_cell_html(c: dict, keepers: list) -> str:
             rk = ' <span class="rk-badge">RK</span>' if k.get("is_rookie_keeper") else ""
             # Keeper on an acquired pick (not their own column) -> tag the owner.
             tag = "" if k.get("_home") else f' <span style="font-size:9px;">({k.get("_owner_short","")})</span>'
-            parts.append(f'<b>{k["player_name"]}</b> '
-                         f'<span style="font-size:9px;">{_pos_span(k.get("position",""))}{rk}</span>{tag}')
+            parts.append(_dbplayer_html(k.get("player_id", ""), k["player_name"],
+                                        k.get("position", ""), rk + tag))
             conflict = conflict or k.get("_conflict")
-        names = "<br>".join(parts)
+        names = "".join(parts)
         if conflict:
-            return (f'<td class="dbcell db-conflict">{pick}<br>{names}'
-                    f'<br><span style="font-size:9px;">no pick this round</span></td>')
+            return (f'<td class="dbcell db-conflict">{pick}{names}'
+                    f'<span style="font-size:9px;">no pick this round</span></td>')
         style = _pos_cell_style(keepers[0].get("position", ""))
-        return f'<td class="dbcell" style="{style}">{pick}<br>{names}</td>'
+        return f'<td class="dbcell" style="{style}">{pick}{names}</td>'
     if c["traded"]:
         return (f'<td class="dbcell db-traded">{pick}<br><b>{c["owner_short"]}</b><br>'
                 f'<span style="font-size:9px;">◄ {c["base_short"]}</span></td>')
@@ -2465,19 +2477,17 @@ def _live_cell_html(c: dict, keepers: list, live: dict, is_onclock: bool) -> str
     pick = f'<span class="dbpick">#{c["pick_no"]}</span>'
     # Traded picks get the same small "◄ original owner" tag as the static
     # Draft Board, so it's obvious a slot changed hands even once it's filled.
-    trade_tag = (f'<br><span class="dbtrade">&#9666; {c["base_short"]}</span>'
+    trade_tag = (f'<span class="dbtrade">&#9666; {c["base_short"]}</span>'
                  if c.get("traded") else "")
     if live:
         pos = live.get("position") or ""
-        sub = _pos_span(pos)
-        if live.get("nfl"):
-            sub += f' · {live["nfl"]}'
+        nfl = f' · {live["nfl"]}' if live.get("nfl") else ""
         style = _pos_cell_style(pos)
-        return (f'<td class="dbcell" style="{style}">{pick}<br><b>{live["player_name"]}</b>'
-                f'<br><span style="font-size:9px;">{sub}</span>{trade_tag}</td>')
+        player = _dbplayer_html(live.get("player_id", ""), live["player_name"], pos, nfl)
+        return f'<td class="dbcell" style="{style}">{pick}{player}{trade_tag}</td>'
     cls = "dbcell db-open db-onclock" if is_onclock else "dbcell db-open"
     return (f'<td class="{cls}">{pick}<br><span style="font-size:9px;">{c["owner_short"]}</span>'
-            f'{trade_tag}</td>')
+            f'<br>{trade_tag}</td>')
 
 
 def _live_draft_body() -> None:

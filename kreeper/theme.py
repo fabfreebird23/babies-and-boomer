@@ -118,6 +118,14 @@ table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-famil
   filter:grayscale(1) contrast(1.05) sepia(.55) hue-rotate(205deg) saturate(1.9) brightness(1.02);
   transition:filter .15s; }
 .hs:hover{ filter:none; }
+/* same duotone treatment, sized down for the draft grid's tight cells */
+.hs-sm{ width:22px; height:22px; border-radius:4px; object-fit:cover; flex:none;
+  background:#ece5fb; border:1.5px solid var(--gold-d);
+  filter:grayscale(1) contrast(1.05) sepia(.55) hue-rotate(205deg) saturate(1.9) brightness(1.02); }
+.dbplayer{ display:flex; align-items:center; gap:5px; margin-top:2px; }
+.dbplayer-txt{ min-width:0; line-height:1.2; }
+.dbplayer-txt b{ display:block; font-size:10.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dbplayer-txt .pos{ font-size:9px; white-space:nowrap; }
 .posdot{ display:inline-block; width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;}
 .p-QB{background:var(--gold-d);} .p-RB{background:var(--purple-l);} .p-WR{background:var(--cyan);} .p-TE{background:var(--red);}
 
@@ -147,7 +155,7 @@ table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-famil
 table.dboard{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:'Oswald'; font-size:12px; }
 table.dboard th{ background:var(--gold); color:var(--purple-d); text-align:center; font-family:'Anton'; font-weight:400;
   font-size:11px; padding:5px; border:1px solid #fff; text-transform:uppercase; letter-spacing:1px; }
-.dbcell{ border:1px solid var(--line); padding:3px 4px; vertical-align:top; height:48px; }
+.dbcell{ border:1px solid var(--line); padding:3px 4px; vertical-align:top; height:56px; }
 table.dboard td.dbcell{ padding:3px 4px; }
 .dbpick{ color:var(--muted); font-size:9px; white-space:nowrap; }
 .db-base{ background:#faf7ff; color:#8a7fb3; }
@@ -155,7 +163,7 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .db-conflict{ background:rgba(214,51,108,.14); color:#b3235a; box-shadow:inset 0 0 0 1px rgba(214,51,108,.4); }
 .db-rd{ background:var(--purple); color:var(--gold); font-family:'Anton'; text-align:center; white-space:nowrap; }
 .db-open{ background:#fff; color:var(--muted); }
-.dbtrade{ font-size:8px; color:var(--gold-d); font-weight:600; white-space:nowrap; }
+.dbtrade{ display:block; margin-top:2px; font-size:8px; color:var(--gold-d); font-weight:600; white-space:nowrap; }
 .db-open.db-onclock{ background:rgba(255,206,31,.30); box-shadow:inset 0 0 0 2px var(--gold-d);
   animation:onclock-pulse 2s ease-in-out infinite; }
 @keyframes onclock-pulse{ 0%,100%{ box-shadow:inset 0 0 0 2px var(--gold-d);} 50%{ box-shadow:inset 0 0 0 2px rgba(201,151,0,.35);} }
