@@ -2482,6 +2482,41 @@ def _live_draft_body() -> None:
             f'<div class="badge">{made}/{total_picks} picks in</div></div>',
             unsafe_allow_html=True,
         )
+
+        st.markdown("##### Log the pick")
+        kept_names = {normalize_name(s.get("player_name", ""))
+                      for ps in submitted_keepers().values() for s in ps}
+        live_names = {normalize_name(p.get("player_name", "")) for p in picks.values()}
+        taken = kept_names | live_names
+
+        q = st.text_input("Search player", key="ld_search", placeholder="Start typing a name…")
+        pool = ADP_DF[~ADP_DF["name_key"].isin(taken)] if not ADP_DF.empty else ADP_DF
+        if q:
+            pool = pool[pool["name"].str.contains(q, case=False, na=False)]
+        pool = pool.sort_values("consensus_rank").head(25)
+
+        if pool.empty:
+            st.info("No matching undrafted players." if q else "Type a name to search.")
+        else:
+            options = {f'{row["name"]} — {row["position"]}': row for _, row in pool.iterrows()}
+            choice = st.selectbox("Matches", list(options.keys()), key="ld_choice", index=None,
+                                  placeholder="Pick the player…")
+            if choice and st.button("Log pick", type="primary", key="ld_log"):
+                row = options[choice]
+                name_idx = get_name_index()
+                pid = name_idx.get(normalize_name(row["name"]), "")
+                nfl = (H.players.get(pid, {}) or {}).get("team") if pid else ""
+                picks[str(c["pick_no"])] = {
+                    "player_id": pid, "player_name": row["name"],
+                    "position": row["position"], "nfl": nfl or "",
+                }
+                record["picks"] = picks
+                record["season"] = SEASON
+                try:
+                    live_draft.save_record(record, SEASON)
+                    st.rerun(scope="fragment")
+                except Exception as e:  # noqa: BLE001
+                    st.error(f"Couldn't save — try again in a moment. ({type(e).__name__})")
     else:
         st.success(f"All {total_picks} picks are in — the draft is complete.")
 
@@ -2501,45 +2536,6 @@ def _live_draft_body() -> None:
         html.append("</tr>")
     html.append("</table></div>")
     st.markdown("".join(html), unsafe_allow_html=True)
-
-    if not onclock:
-        return
-    r, slot, c = onclock
-
-    st.markdown("##### Log the pick")
-    kept_names = {normalize_name(s.get("player_name", ""))
-                  for ps in submitted_keepers().values() for s in ps}
-    live_names = {normalize_name(p.get("player_name", "")) for p in picks.values()}
-    taken = kept_names | live_names
-
-    q = st.text_input("Search player", key="ld_search", placeholder="Start typing a name…")
-    pool = ADP_DF[~ADP_DF["name_key"].isin(taken)] if not ADP_DF.empty else ADP_DF
-    if q:
-        pool = pool[pool["name"].str.contains(q, case=False, na=False)]
-    pool = pool.sort_values("consensus_rank").head(25)
-
-    if pool.empty:
-        st.info("No matching undrafted players." if q else "Type a name to search.")
-    else:
-        options = {f'{row["name"]} — {row["position"]}': row for _, row in pool.iterrows()}
-        choice = st.selectbox("Matches", list(options.keys()), key="ld_choice", index=None,
-                              placeholder="Pick the player…")
-        if choice and st.button("Log pick", type="primary", key="ld_log"):
-            row = options[choice]
-            name_idx = get_name_index()
-            pid = name_idx.get(normalize_name(row["name"]), "")
-            nfl = (H.players.get(pid, {}) or {}).get("team") if pid else ""
-            picks[str(c["pick_no"])] = {
-                "player_id": pid, "player_name": row["name"],
-                "position": row["position"], "nfl": nfl or "",
-            }
-            record["picks"] = picks
-            record["season"] = SEASON
-            try:
-                live_draft.save_record(record, SEASON)
-                st.rerun(scope="fragment")
-            except Exception as e:  # noqa: BLE001
-                st.error(f"Couldn't save — try again in a moment. ({type(e).__name__})")
 
     if picks:
         st.markdown("##### Recent picks")
@@ -2769,27 +2765,6 @@ st.markdown(
     f'</div>',
     unsafe_allow_html=True,
 )
-
-# Sidebar keeps league info + ADP freshness (secondary).
-with st.sidebar:
-    st.caption(f"**{LEAGUE['name']}** · season **{SEASON}** · {NT} teams · "
-               f"{DRAFT_ROUNDS} rds · {LEAGUE.get('scoring','ppr').upper()}")
-    st.divider()
-    st.subheader("ADP freshness")
-    if ADP_META:
-        st.caption(f"Updated: {ADP_META.get('updated_utc','—')}")
-        st.caption("Sources: " + ", ".join(ADP_META.get("sources", [])))
-        with st.expander("Source status"):
-            for k, v in ADP_META.get("status", {}).items():
-                st.write(f"{'OK' if v.startswith('ok') else 'FAILED'} · **{k}** — {v}")
-    else:
-        st.warning("No ADP pulled yet. Run `python scripts/refresh_adp.py`.")
-    st.divider()
-    st.caption("Rules: 3-yr max per keeper · Yr1 draft round · Yr2 up 3 rounds or ADP · "
-               "Yr3 ADP · you may always keep at ADP if it's a cheaper (later) pick · "
-               "rookies kept for their career at your last rounds · a rookie moved to a "
-               "regular slot costs the round they were drafted as a rookie (clock restarts) · "
-               "trades carry the keeper round over.")
 
 if page == "home":
     render_home()

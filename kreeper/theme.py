@@ -57,7 +57,9 @@ CSS = """
 html, body, [class*="css"]{ font-family:'Oswald', sans-serif; color:var(--ink); }
 
 [data-testid="stHeader"]{ background:transparent; }
-[data-testid="stSidebar"]{ background:rgba(255,255,255,.85); border-right:3px solid var(--gold); }
+/* no sidebar anywhere in this app — hide Streamlit's collapsed-sidebar
+   toggle so there's no dangling entry point to an empty panel. */
+[data-testid="stSidebarCollapsedControl"]{ display:none !important; }
 
 /* headings — heavy condensed caps. h2 = magazine "panel" bar. */
 h1,h2,h3{ font-family:'Anton', sans-serif !important; letter-spacing:2px; text-transform:uppercase; }
@@ -74,18 +76,6 @@ h3, h3 *{ color:var(--purple-d) !important; }
   transform:rotate(-3deg); display:inline-block; white-space:nowrap; }
 .neon-tag{ font-family:'Oswald'; letter-spacing:6px; font-weight:700; font-size:11px;
   color:var(--purple); text-transform:uppercase; margin-top:8px; }
-/* let the sidebar mark spell the league name out across two lines */
-[data-testid="stSidebar"] .neon-logo{ white-space:normal; line-height:.92; -webkit-text-stroke-width:2px; }
-
-/* sidebar nav radio (unused now) -> light label tags */
-[data-testid="stSidebar"] [role="radiogroup"] label{ border:1.5px solid var(--purple); border-radius:0;
-  padding:6px 11px; margin-bottom:7px; background:#fff; transition:.12s; }
-[data-testid="stSidebar"] [role="radiogroup"] label:hover{ border-color:var(--gold-d); }
-[data-testid="stSidebar"] [role="radiogroup"] label p{ font-weight:700; text-transform:uppercase;
-  letter-spacing:2px; font-size:13px; color:var(--purple); }
-[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked){ background:var(--gold); border-color:var(--gold); }
-[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p{ color:var(--purple-d); }
-[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child{ display:none; }
 
 .stButton>button{ font-family:'Anton'; letter-spacing:2px; text-transform:uppercase;
   background:var(--gold); color:var(--purple-d); border:none; border-radius:0; }
