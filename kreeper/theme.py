@@ -165,6 +165,25 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .db-keep{ background:rgba(28,155,99,.14); color:#15824f; box-shadow:inset 0 0 0 1px rgba(28,155,99,.4); }
 .db-conflict{ background:rgba(214,51,108,.14); color:#b3235a; box-shadow:inset 0 0 0 1px rgba(214,51,108,.4); }
 .db-rd{ background:var(--purple); color:var(--gold); font-family:'Anton'; text-align:center; white-space:nowrap; }
+.db-live{ background:rgba(75,45,159,.10); color:var(--purple-d); box-shadow:inset 0 0 0 1px rgba(75,45,159,.35); }
+.db-open{ background:#fff; color:var(--muted); }
+.db-open.db-onclock{ background:rgba(255,206,31,.30); box-shadow:inset 0 0 0 2px var(--gold-d);
+  animation:onclock-pulse 2s ease-in-out infinite; }
+@keyframes onclock-pulse{ 0%,100%{ box-shadow:inset 0 0 0 2px var(--gold-d);} 50%{ box-shadow:inset 0 0 0 2px rgba(201,151,0,.35);} }
+@media (prefers-reduced-motion: reduce){ .db-open.db-onclock{ animation:none !important; } }
+
+/* live draft: on-the-clock banner + pick-entry panel */
+.ld-clock{ display:flex; align-items:center; justify-content:space-between; gap:14px;
+  background:#fff; border:2px solid var(--gold); border-radius:12px; padding:14px 18px; margin-bottom:14px; }
+.ld-clock .who{ font-family:'Anton'; font-size:19px; color:var(--purple-d); }
+.ld-clock .meta{ font-size:12px; color:var(--muted); margin-top:2px; }
+.ld-clock .badge{ font-family:'Anton'; font-size:12px; background:var(--gold); color:var(--purple-d);
+  padding:6px 12px; border-radius:999px; white-space:nowrap; }
+.ld-recent{ display:flex; flex-direction:column; gap:6px; }
+.ld-recent-row{ display:flex; align-items:center; gap:10px; padding:7px 10px; border:1px solid var(--line);
+  border-radius:9px; font-size:12.5px; }
+.ld-recent-row .pk{ font-family:'Anton'; color:var(--gold-d); width:34px; flex:none; }
+.ld-recent-row .nm{ font-weight:700; flex:1; }
 
 /* top bar — centered script-logo masthead band, on every page, with the
    phase status line underneath; a gold rule closes the whole band off. */

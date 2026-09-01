@@ -16,7 +16,7 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from kreeper import config, draftboard, engine, history, phase, storage, theme
+from kreeper import config, draftboard, engine, history, live_draft, phase, storage, theme
 from kreeper.adp import consensus as adp_consensus
 from kreeper.names import normalize_name
 
@@ -2222,7 +2222,7 @@ def _board_cell_html(c: dict, keepers: list) -> str:
         conflict = False
         parts = []
         for k in keepers:
-            rk = " 🆕" if k.get("is_rookie_keeper") else ""
+            rk = ' <span class="rk-badge">RK</span>' if k.get("is_rookie_keeper") else ""
             # Keeper on an acquired pick (not their own column) -> tag the owner.
             tag = "" if k.get("_home") else f' <span style="font-size:9px;">({k.get("_owner_short","")})</span>'
             parts.append(f'<b>{k["player_name"]}</b> '
@@ -2349,26 +2349,15 @@ def render_odds() -> None:
                "rounds gained by your best keepers.")
 
 
-def render_draft_board() -> None:
-    st.markdown(f'<h3>{SEASON} <span class="g">Draft Board</span></h3>', unsafe_allow_html=True)
-    try:
-        board = get_board()
-    except Exception as e:  # noqa: BLE001
-        st.error(f"Couldn't load the draft board from Sleeper: {e}")
-        return
-
-    if not board["order_set"]:
-        st.caption("Draft order isn't set in Sleeper yet — slots show in default roster "
-                   "order and will update automatically once the commissioner sets it. "
-                   "Traded picks are already reflected.")
-
-    teams, rounds, cells = board["teams"], board["rounds"], board["cells"]
-
-    # Overlay submitted keepers onto a pick the team OWNS that round — preferring
-    # their own column, then an acquired pick's slot. So two keepers at the same
-    # round (when the team owns two of that pick) split across both cells instead
-    # of stacking. Each cell is used at most once.
+def _keeper_cell_map(board: dict) -> dict:
+    """Overlay submitted keepers onto a pick the team OWNS that round —
+    preferring their own column, then an acquired pick's slot. So two
+    keepers at the same round (when the team owns two of that pick) split
+    across both cells instead of stacking. Each cell is used at most once.
+    Shared by the static Draft Board and the live draft board — both need
+    to know which cells are already spoken for by a keeper."""
     from collections import defaultdict
+    cells = board["cells"]
     data = submitted_keepers()
     owner_to_slot = board["owner_to_slot"]
     owner_to_roster = board["owner_to_roster"]
@@ -2401,6 +2390,24 @@ def render_draft_board() -> None:
             entry["_home"] = placed == own_slot
             entry["_conflict"] = conflict
             keeper_cell.setdefault((rd, placed), []).append(entry)
+    return keeper_cell
+
+
+def render_draft_board() -> None:
+    st.markdown(f'<h3>{SEASON} <span class="g">Draft Board</span></h3>', unsafe_allow_html=True)
+    try:
+        board = get_board()
+    except Exception as e:  # noqa: BLE001
+        st.error(f"Couldn't load the draft board from Sleeper: {e}")
+        return
+
+    if not board["order_set"]:
+        st.caption("Draft order isn't set in Sleeper yet — slots show in default roster "
+                   "order and will update automatically once the commissioner sets it. "
+                   "Traded picks are already reflected.")
+
+    teams, rounds, cells = board["teams"], board["rounds"], board["cells"]
+    keeper_cell = _keeper_cell_map(board)
     html = ['<div class="neonwrap"><table class="dboard">']
     html.append('<tr><th style="width:32px;">Rd</th>')
     for slot in range(1, teams + 1):
@@ -2423,6 +2430,149 @@ def render_draft_board() -> None:
         "Keepers appear here for everyone as soon as they're saved.</p>",
         unsafe_allow_html=True,
     )
+
+
+def _live_cell_html(c: dict, keepers: list, live: dict, is_onclock: bool) -> str:
+    if keepers:
+        return _board_cell_html(c, keepers)
+    pick = f'<span class="dbpick">#{c["pick_no"]}</span>'
+    if live:
+        sub = live.get("position") or ""
+        if live.get("nfl"):
+            sub += f' · {live["nfl"]}'
+        return (f'<td class="dbcell db-live">{pick}<br><b>{live["player_name"]}</b>'
+                f'<br><span style="font-size:9px;opacity:.8;">{sub}</span></td>')
+    cls = "dbcell db-open db-onclock" if is_onclock else "dbcell db-open"
+    return f'<td class="{cls}">{pick}<br><span style="font-size:9px;">{c["owner_short"]}</span></td>'
+
+
+def _live_draft_body() -> None:
+    """The auto-refreshing half of the live draft board — grid, on-the-clock
+    banner, and the pick-entry form. Wrapped in st.fragment(run_every=...)
+    by render_live_draft() so every open tab picks up new picks on its own,
+    no manual refresh needed."""
+    try:
+        board = get_board()
+    except Exception as e:  # noqa: BLE001
+        st.error(f"Couldn't load the draft board from Sleeper: {e}")
+        return
+
+    teams, rounds, cells = board["teams"], board["rounds"], board["cells"]
+    keeper_cell = _keeper_cell_map(board)
+    record = live_draft.load_record(SEASON)
+    picks: dict = record.get("picks", {})
+
+    ordered = sorted(cells.items(), key=lambda kv: kv[1]["pick_no"])
+    onclock = None  # (round, slot, cell)
+    for (r, slot), c in ordered:
+        if (r, slot) in keeper_cell or str(c["pick_no"]) in picks:
+            continue
+        onclock = (r, slot, c)
+        break
+
+    total_picks = teams * rounds
+    made = len(keeper_cell) + len(picks)
+
+    if onclock:
+        r, slot, c = onclock
+        team = board["slot_team"][slot]
+        st.markdown(
+            f'<div class="ld-clock"><div><div class="who">On the clock: {team}</div>'
+            f'<div class="meta">Round {r}, Pick {c["pick_no"]} (slot {slot})</div></div>'
+            f'<div class="badge">{made}/{total_picks} picks in</div></div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.success(f"All {total_picks} picks are in — the draft is complete.")
+
+    html = ['<div class="neonwrap"><table class="dboard">']
+    html.append('<tr><th style="width:32px;">Rd</th>')
+    for slot in range(1, teams + 1):
+        html.append(f'<th>{slot}. {board["slot_team"][slot].split()[0]}</th>')
+    html.append("</tr>")
+    for r in range(1, rounds + 1):
+        html.append("<tr>")
+        html.append(f'<td class="dbcell db-rd">{r}</td>')
+        for slot in range(1, teams + 1):
+            c = cells[(r, slot)]
+            live = picks.get(str(c["pick_no"]))
+            is_onclock = onclock is not None and onclock[0] == r and onclock[1] == slot
+            html.append(_live_cell_html(c, keeper_cell.get((r, slot)), live, is_onclock))
+        html.append("</tr>")
+    html.append("</table></div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
+
+    if not onclock:
+        return
+    r, slot, c = onclock
+
+    st.markdown("##### Log the pick")
+    kept_names = {normalize_name(s.get("player_name", ""))
+                  for ps in submitted_keepers().values() for s in ps}
+    live_names = {normalize_name(p.get("player_name", "")) for p in picks.values()}
+    taken = kept_names | live_names
+
+    q = st.text_input("Search player", key="ld_search", placeholder="Start typing a name…")
+    pool = ADP_DF[~ADP_DF["name_key"].isin(taken)] if not ADP_DF.empty else ADP_DF
+    if q:
+        pool = pool[pool["name"].str.contains(q, case=False, na=False)]
+    pool = pool.sort_values("consensus_rank").head(25)
+
+    if pool.empty:
+        st.info("No matching undrafted players." if q else "Type a name to search.")
+    else:
+        options = {f'{row["name"]} — {row["position"]}': row for _, row in pool.iterrows()}
+        choice = st.selectbox("Matches", list(options.keys()), key="ld_choice", index=None,
+                              placeholder="Pick the player…")
+        if choice and st.button("Log pick", type="primary", key="ld_log"):
+            row = options[choice]
+            name_idx = get_name_index()
+            pid = name_idx.get(normalize_name(row["name"]), "")
+            nfl = (H.players.get(pid, {}) or {}).get("team") if pid else ""
+            picks[str(c["pick_no"])] = {
+                "player_id": pid, "player_name": row["name"],
+                "position": row["position"], "nfl": nfl or "",
+            }
+            record["picks"] = picks
+            record["season"] = SEASON
+            try:
+                live_draft.save_record(record, SEASON)
+                st.rerun(scope="fragment")
+            except Exception as e:  # noqa: BLE001
+                st.error(f"Couldn't save — try again in a moment. ({type(e).__name__})")
+
+    if picks:
+        st.markdown("##### Recent picks")
+        recent = sorted(picks.items(), key=lambda kv: -int(kv[0]))[:8]
+        for pn, p in recent:
+            col1, col2 = st.columns([5, 1])
+            col1.markdown(
+                f'<div class="ld-recent-row"><span class="pk">#{pn}</span>'
+                f'<span class="nm">{p["player_name"]}</span>'
+                f'<span style="color:var(--muted);font-size:11px;">{p.get("position","")}</span></div>',
+                unsafe_allow_html=True,
+            )
+            if col2.button("Undo", key=f"ld_undo_{pn}"):
+                picks.pop(pn, None)
+                record["picks"] = picks
+                live_draft.save_record(record, SEASON)
+                st.rerun(scope="fragment")
+
+    with st.expander("Reset the live draft"):
+        st.caption("Clears every logged pick. Keepers aren't affected — they're computed "
+                   "live from Set My Keepers, not stored here.")
+        if st.button("Reset all picks", key="ld_reset"):
+            live_draft.save_record({}, SEASON)
+            st.rerun(scope="fragment")
+
+
+def render_live_draft() -> None:
+    st.markdown('<h2 class="two-tone">Live <span class="g">Draft Board</span></h2>', unsafe_allow_html=True)
+    st.caption("Track the actual (offline) draft pick by pick. Keepers are pre-filled from "
+               "Set My Keepers; everyone with this page open sees new picks on their own — "
+               "no refresh needed.")
+    auto = st.toggle("Auto-refresh (every 5s)", value=True, key="ld_auto")
+    st.fragment(run_every=(5 if auto else None))(_live_draft_body)()
 
 
 def render_adp() -> None:
@@ -2502,8 +2652,8 @@ PRESEASON_GROUPS = [("keepers", "Keepers"), ("draft", "Draft"), ("players", "Pla
 PRESEASON_LEAVES = {
     "keepers": [("setkeepers", "Set My Keepers"), ("value", "Keeper Value Board"),
                 ("landscape", "Keeper Landscape"), ("needs", "Roster Needs")],
-    "draft": [("board", "Draft Board"), ("projected", "Projected Draft"),
-              ("capital", "Draft Capital & Keeper Cost")],
+    "draft": [("live", "Live Draft Board"), ("board", "Draft Board"),
+              ("projected", "Projected Draft"), ("capital", "Draft Capital & Keeper Cost")],
     "players": [("adp", "ADP"), ("trends", "ADP Trends")],
 }
 INSEASON_GROUPS = [("trades", "Trades"), ("league", "League"), ("history", "History")]
@@ -2657,7 +2807,7 @@ elif page == "preseason":
         {"setkeepers": render_my_keepers, "value": render_keeper_value_board,
          "landscape": render_keeper_landscape, "needs": render_roster_needs}[t]()
     elif g == "draft":
-        {"board": render_draft_board, "projected": render_mock_draft,
+        {"live": render_live_draft, "board": render_draft_board, "projected": render_mock_draft,
          "capital": render_draft_capital}[t]()
     else:
         if t == "adp":
