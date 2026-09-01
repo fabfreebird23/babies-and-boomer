@@ -157,7 +157,10 @@ table.lb tr.rd-sep td{ background:var(--purple-d); color:var(--gold); font-famil
 .draw-row .sub{ font-size:11.5px; color:var(--muted); }
 
 /* draft board */
-table.dboard{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:'Oswald'; font-size:12px; }
+/* opaque base so the page's own decorative diagonal-line texture can't
+   show through a cell's translucent state color (traded/conflict/position
+   tints are all rgba, same reason table.lb needed this) */
+table.dboard{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:'Oswald'; font-size:12px; background:#fff; }
 table.dboard th{ background:var(--gold); color:var(--purple-d); text-align:center; font-family:'Anton'; font-weight:400;
   font-size:11px; padding:5px; border:1px solid #fff; text-transform:uppercase; letter-spacing:1px; }
 .dbcell{ border:1px solid var(--line); padding:4px 5px; vertical-align:top; height:64px; }
