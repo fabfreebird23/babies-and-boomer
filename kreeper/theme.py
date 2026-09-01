@@ -152,10 +152,8 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .dbpick{ color:var(--muted); font-size:9px; white-space:nowrap; }
 .db-base{ background:#faf7ff; color:#8a7fb3; }
 .db-traded{ background:rgba(255,206,31,.28); color:var(--gold-d); }
-.db-keep{ background:rgba(28,155,99,.14); color:#15824f; box-shadow:inset 0 0 0 1px rgba(28,155,99,.4); }
 .db-conflict{ background:rgba(214,51,108,.14); color:#b3235a; box-shadow:inset 0 0 0 1px rgba(214,51,108,.4); }
 .db-rd{ background:var(--purple); color:var(--gold); font-family:'Anton'; text-align:center; white-space:nowrap; }
-.db-live{ background:rgba(75,45,159,.10); color:var(--purple-d); box-shadow:inset 0 0 0 1px rgba(75,45,159,.35); }
 .db-open{ background:#fff; color:var(--muted); }
 .dbtrade{ font-size:8px; color:var(--gold-d); font-weight:600; white-space:nowrap; }
 .db-open.db-onclock{ background:rgba(255,206,31,.30); box-shadow:inset 0 0 0 2px var(--gold-d);

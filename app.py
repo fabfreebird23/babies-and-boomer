@@ -2217,6 +2217,9 @@ def render_my_keepers() -> None:
 
 
 _POS_COLOR = {"QB": "var(--gold-d)", "RB": "var(--purple-l)", "WR": "var(--cyan)", "TE": "var(--red)"}
+# Same four hues as _POS_COLOR, as raw rgb() triples for building translucent
+# cell-shading rgba() below (CSS can't tint a var() color with an alpha).
+_POS_RGB = {"QB": "201,151,0", "RB": "122,91,216", "WR": "35,144,192", "TE": "214,51,108"}
 
 
 def _pos_span(pos: str) -> str:
@@ -2225,6 +2228,17 @@ def _pos_span(pos: str) -> str:
     jump out while scanning the draft grid instead of every filled cell
     reading as the same flat color."""
     return f'<span style="font-weight:700;color:{_POS_COLOR.get(pos, "var(--muted)")};">{pos}</span>'
+
+
+def _pos_cell_style(pos: str) -> str:
+    """Shade a filled draft-grid cell by the position drafted — the same
+    hues as _pos_span, now as the cell's own background/ring instead of
+    just the position label, so a positional run is visible at a glance
+    across the whole grid, not just on close reading."""
+    rgb = _POS_RGB.get(pos)
+    if not rgb:
+        return ""
+    return f'background:rgba({rgb},.16);box-shadow:inset 0 0 0 1px rgba({rgb},.45);color:var(--ink);'
 
 
 def _board_cell_html(c: dict, keepers: list) -> str:
@@ -2243,7 +2257,8 @@ def _board_cell_html(c: dict, keepers: list) -> str:
         if conflict:
             return (f'<td class="dbcell db-conflict">{pick}<br>{names}'
                     f'<br><span style="font-size:9px;">no pick this round</span></td>')
-        return f'<td class="dbcell db-keep">{pick}<br>{names}</td>'
+        style = _pos_cell_style(keepers[0].get("position", ""))
+        return f'<td class="dbcell" style="{style}">{pick}<br>{names}</td>'
     if c["traded"]:
         return (f'<td class="dbcell db-traded">{pick}<br><b>{c["owner_short"]}</b><br>'
                 f'<span style="font-size:9px;">◄ {c["base_short"]}</span></td>')
@@ -2434,8 +2449,9 @@ def render_draft_board() -> None:
     st.markdown("".join(html), unsafe_allow_html=True)
     st.markdown(
         '<p style="font-size:14px;color:var(--muted);">'
-        '<span style="display:inline-block;width:9px;height:9px;background:rgba(28,155,99,.4);'
-        'margin-right:5px;"></span>keeper locked in (a name in parentheses = kept on a pick acquired via trade) &middot; '
+        'A shaded cell is a locked-in keeper, colored by position — '
+        f'{_pos_span("QB")} &middot; {_pos_span("RB")} &middot; {_pos_span("WR")} &middot; {_pos_span("TE")} '
+        '(a name in parentheses = kept on a pick acquired via trade) &middot; '
         '<span style="display:inline-block;width:9px;height:9px;background:rgba(255,206,31,.6);'
         'margin-right:5px;"></span>traded pick (new owner, &#9666; original owner) &middot; plain cell = pick owner. '
         "Keepers appear here for everyone as soon as they're saved.</p>",
@@ -2452,10 +2468,12 @@ def _live_cell_html(c: dict, keepers: list, live: dict, is_onclock: bool) -> str
     trade_tag = (f'<br><span class="dbtrade">&#9666; {c["base_short"]}</span>'
                  if c.get("traded") else "")
     if live:
-        sub = _pos_span(live.get("position") or "")
+        pos = live.get("position") or ""
+        sub = _pos_span(pos)
         if live.get("nfl"):
             sub += f' · {live["nfl"]}'
-        return (f'<td class="dbcell db-live">{pick}<br><b>{live["player_name"]}</b>'
+        style = _pos_cell_style(pos)
+        return (f'<td class="dbcell" style="{style}">{pick}<br><b>{live["player_name"]}</b>'
                 f'<br><span style="font-size:9px;">{sub}</span>{trade_tag}</td>')
     cls = "dbcell db-open db-onclock" if is_onclock else "dbcell db-open"
     return (f'<td class="{cls}">{pick}<br><span style="font-size:9px;">{c["owner_short"]}</span>'
