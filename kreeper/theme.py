@@ -157,6 +157,7 @@ table.dboard td.dbcell{ padding:3px 4px; }
 .db-rd{ background:var(--purple); color:var(--gold); font-family:'Anton'; text-align:center; white-space:nowrap; }
 .db-live{ background:rgba(75,45,159,.10); color:var(--purple-d); box-shadow:inset 0 0 0 1px rgba(75,45,159,.35); }
 .db-open{ background:#fff; color:var(--muted); }
+.dbtrade{ font-size:8px; color:var(--gold-d); font-weight:600; white-space:nowrap; }
 .db-open.db-onclock{ background:rgba(255,206,31,.30); box-shadow:inset 0 0 0 2px var(--gold-d);
   animation:onclock-pulse 2s ease-in-out infinite; }
 @keyframes onclock-pulse{ 0%,100%{ box-shadow:inset 0 0 0 2px var(--gold-d);} 50%{ box-shadow:inset 0 0 0 2px rgba(201,151,0,.35);} }

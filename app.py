@@ -2436,14 +2436,19 @@ def _live_cell_html(c: dict, keepers: list, live: dict, is_onclock: bool) -> str
     if keepers:
         return _board_cell_html(c, keepers)
     pick = f'<span class="dbpick">#{c["pick_no"]}</span>'
+    # Traded picks get the same small "◄ original owner" tag as the static
+    # Draft Board, so it's obvious a slot changed hands even once it's filled.
+    trade_tag = (f'<br><span class="dbtrade">&#9666; {c["base_short"]}</span>'
+                 if c.get("traded") else "")
     if live:
         sub = live.get("position") or ""
         if live.get("nfl"):
             sub += f' · {live["nfl"]}'
         return (f'<td class="dbcell db-live">{pick}<br><b>{live["player_name"]}</b>'
-                f'<br><span style="font-size:9px;opacity:.8;">{sub}</span></td>')
+                f'<br><span style="font-size:9px;opacity:.8;">{sub}</span>{trade_tag}</td>')
     cls = "dbcell db-open db-onclock" if is_onclock else "dbcell db-open"
-    return f'<td class="{cls}">{pick}<br><span style="font-size:9px;">{c["owner_short"]}</span></td>'
+    return (f'<td class="{cls}">{pick}<br><span style="font-size:9px;">{c["owner_short"]}</span>'
+            f'{trade_tag}</td>')
 
 
 def _live_draft_body() -> None:
@@ -2475,9 +2480,13 @@ def _live_draft_body() -> None:
 
     if onclock:
         r, slot, c = onclock
-        team = board["slot_team"][slot]
+        # The CELL's current owner, not the slot's base/column owner — a pick
+        # traded away from the slot's original team must show the new owner.
+        team = c["owner_name"]
+        trade_note = (f' <span style="font-size:12px;color:var(--gold-d);font-weight:400;">'
+                      f'(traded from {c["base_short"]})</span>' if c.get("traded") else "")
         st.markdown(
-            f'<div class="ld-clock"><div><div class="who">On the clock: {team}</div>'
+            f'<div class="ld-clock"><div><div class="who">On the clock: {team}{trade_note}</div>'
             f'<div class="meta">Round {r}, Pick {c["pick_no"]} (slot {slot})</div></div>'
             f'<div class="badge">{made}/{total_picks} picks in</div></div>',
             unsafe_allow_html=True,
@@ -2489,18 +2498,18 @@ def _live_draft_body() -> None:
         live_names = {normalize_name(p.get("player_name", "")) for p in picks.values()}
         taken = kept_names | live_names
 
-        q = st.text_input("Search player", key="ld_search", placeholder="Start typing a name…")
         pool = ADP_DF[~ADP_DF["name_key"].isin(taken)] if not ADP_DF.empty else ADP_DF
-        if q:
-            pool = pool[pool["name"].str.contains(q, case=False, na=False)]
-        pool = pool.sort_values("consensus_rank").head(25)
+        pool = pool.sort_values("consensus_rank")
 
         if pool.empty:
-            st.info("No matching undrafted players." if q else "Type a name to search.")
+            st.info("No undrafted players left.")
         else:
+            # A single searchable dropdown — Streamlit's own selectbox already
+            # filters its options as you type, so there's no need for a
+            # separate search box feeding a second "matches" box.
             options = {f'{row["name"]} — {row["position"]}': row for _, row in pool.iterrows()}
-            choice = st.selectbox("Matches", list(options.keys()), key="ld_choice", index=None,
-                                  placeholder="Pick the player…")
+            choice = st.selectbox("Search player", list(options.keys()), key="ld_choice", index=None,
+                                  placeholder="Start typing a name…")
             if choice and st.button("Log pick", type="primary", key="ld_log"):
                 row = options[choice]
                 name_idx = get_name_index()
@@ -2514,6 +2523,7 @@ def _live_draft_body() -> None:
                 record["season"] = SEASON
                 try:
                     live_draft.save_record(record, SEASON)
+                    st.session_state.pop("ld_choice", None)
                     st.rerun(scope="fragment")
                 except Exception as e:  # noqa: BLE001
                     st.error(f"Couldn't save — try again in a moment. ({type(e).__name__})")
