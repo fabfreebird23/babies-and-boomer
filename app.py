@@ -2499,7 +2499,7 @@ def _live_draft_body() -> None:
         taken = kept_names | live_names
 
         pool = ADP_DF[~ADP_DF["name_key"].isin(taken)] if not ADP_DF.empty else ADP_DF
-        pool = pool.sort_values("consensus_rank")
+        pool = pool.sort_values("name")
 
         if pool.empty:
             st.info("No undrafted players left.")
