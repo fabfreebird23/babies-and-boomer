@@ -1,4 +1,11 @@
 {
-  "picks": {},
+  "picks": {
+    "1": {
+      "player_id": "",
+      "player_name": "49ers D/ST",
+      "position": "DST",
+      "nfl": ""
+    }
+  },
   "season": 2026
 }
