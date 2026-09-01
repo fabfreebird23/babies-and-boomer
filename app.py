@@ -2216,6 +2216,17 @@ def render_my_keepers() -> None:
                 st.error(f"Couldn't save — try again in a moment. ({type(e).__name__})")
 
 
+_POS_COLOR = {"QB": "var(--gold-d)", "RB": "var(--purple-l)", "WR": "var(--cyan)", "TE": "var(--red)"}
+
+
+def _pos_span(pos: str) -> str:
+    """A player's position, colored to match the posdot convention used
+    everywhere else (ADP tables, contract cards) — lets a positional run
+    jump out while scanning the draft grid instead of every filled cell
+    reading as the same flat color."""
+    return f'<span style="font-weight:700;color:{_POS_COLOR.get(pos, "var(--muted)")};">{pos}</span>'
+
+
 def _board_cell_html(c: dict, keepers: list) -> str:
     pick = f'<span class="dbpick">#{c["pick_no"]}</span>'
     if keepers:
@@ -2226,7 +2237,7 @@ def _board_cell_html(c: dict, keepers: list) -> str:
             # Keeper on an acquired pick (not their own column) -> tag the owner.
             tag = "" if k.get("_home") else f' <span style="font-size:9px;">({k.get("_owner_short","")})</span>'
             parts.append(f'<b>{k["player_name"]}</b> '
-                         f'<span style="font-size:9px;opacity:.8;">{k.get("position","")}{rk}</span>{tag}')
+                         f'<span style="font-size:9px;">{_pos_span(k.get("position",""))}{rk}</span>{tag}')
             conflict = conflict or k.get("_conflict")
         names = "<br>".join(parts)
         if conflict:
@@ -2441,11 +2452,11 @@ def _live_cell_html(c: dict, keepers: list, live: dict, is_onclock: bool) -> str
     trade_tag = (f'<br><span class="dbtrade">&#9666; {c["base_short"]}</span>'
                  if c.get("traded") else "")
     if live:
-        sub = live.get("position") or ""
+        sub = _pos_span(live.get("position") or "")
         if live.get("nfl"):
             sub += f' · {live["nfl"]}'
         return (f'<td class="dbcell db-live">{pick}<br><b>{live["player_name"]}</b>'
-                f'<br><span style="font-size:9px;opacity:.8;">{sub}</span>{trade_tag}</td>')
+                f'<br><span style="font-size:9px;">{sub}</span>{trade_tag}</td>')
     cls = "dbcell db-open db-onclock" if is_onclock else "dbcell db-open"
     return (f'<td class="{cls}">{pick}<br><span style="font-size:9px;">{c["owner_short"]}</span>'
             f'{trade_tag}</td>')
