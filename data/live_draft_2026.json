@@ -5,6 +5,12 @@
       "player_name": "49ers D/ST",
       "position": "DST",
       "nfl": ""
+    },
+    "2": {
+      "player_id": "6828",
+      "player_name": "AJ Dillon",
+      "position": NaN,
+      "nfl": "CAR"
     }
   },
   "season": 2026
