@@ -2527,6 +2527,35 @@ def _live_draft_body() -> None:
     total_picks = teams * rounds
     made = len(keeper_cell) + len(picks)
 
+    # A chime for everyone watching (not just whoever logged the pick) —
+    # each browser tab tracks the last pick count it saw in its own
+    # session_state, so a jump on this auto-refresh (someone else's pick
+    # landed) or right after this tab's own "Log pick" both fire it once.
+    # Browsers block audio before any user gesture on the page, so the
+    # very first chime of a session may be silent until someone taps
+    # something — routine after that.
+    last_seen = st.session_state.get("ld_seen_picks")
+    if st.session_state.get("ld_sound", True) and last_seen is not None and made > last_seen:
+        components.html(
+            "<script>(function(){"
+            "try{"
+            "const ctx = new (window.AudioContext || window.webkitAudioContext)();"
+            "function tone(freq, start, dur){"
+            "  const o = ctx.createOscillator(), g = ctx.createGain();"
+            "  o.type = 'sine'; o.frequency.value = freq;"
+            "  g.gain.setValueAtTime(0.0001, ctx.currentTime + start);"
+            "  g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + start + 0.02);"
+            "  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);"
+            "  o.connect(g); g.connect(ctx.destination);"
+            "  o.start(ctx.currentTime + start); o.stop(ctx.currentTime + start + dur + 0.05);"
+            "}"
+            "tone(660, 0, 0.12); tone(880, 0.11, 0.2);"
+            "}catch(e){}"
+            "})();</script>",
+            height=0,
+        )
+    st.session_state["ld_seen_picks"] = made
+
     if onclock:
         r, slot, c = onclock
         # The CELL's current owner, not the slot's base/column owner — a pick
@@ -2632,7 +2661,9 @@ def render_live_draft() -> None:
     st.caption("Track the actual (offline) draft pick by pick. Keepers are pre-filled from "
                "Set My Keepers; everyone with this page open sees new picks on their own — "
                "no refresh needed.")
-    auto = st.toggle("Auto-refresh (every 5s)", value=True, key="ld_auto")
+    c1, c2 = st.columns(2)
+    auto = c1.toggle("Auto-refresh (every 5s)", value=True, key="ld_auto")
+    c2.toggle("Sound on new pick", value=True, key="ld_sound")
     st.fragment(run_every=(5 if auto else None))(_live_draft_body)()
 
 
