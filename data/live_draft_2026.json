@@ -29,6 +29,12 @@
       "player_name": "James Cook III",
       "position": "RB",
       "nfl": "BUF"
+    },
+    "6": {
+      "player_id": "6786",
+      "player_name": "CeeDee Lamb",
+      "position": "WR",
+      "nfl": "DAL"
     }
   },
   "season": 2026
