@@ -323,6 +323,12 @@
       "player_name": "Jordan Mason",
       "position": "RB",
       "nfl": "MIN"
+    },
+    "73": {
+      "player_id": "10232",
+      "player_name": "Michael Wilson",
+      "position": "WR",
+      "nfl": "ARI"
     }
   },
   "season": 2026
