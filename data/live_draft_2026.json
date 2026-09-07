@@ -377,6 +377,12 @@
       "player_name": "Bo Nix",
       "position": "QB",
       "nfl": "DEN"
+    },
+    "83": {
+      "player_id": "12501",
+      "player_name": "Matthew Golden",
+      "position": "WR",
+      "nfl": "GB"
     }
   },
   "season": 2026
