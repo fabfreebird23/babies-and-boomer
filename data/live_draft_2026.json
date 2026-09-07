@@ -41,6 +41,12 @@
       "player_name": "Derrick Henry",
       "position": "RB",
       "nfl": "BAL"
+    },
+    "10": {
+      "player_id": "6794",
+      "player_name": "Justin Jefferson",
+      "position": "WR",
+      "nfl": "MIN"
     }
   },
   "season": 2026
