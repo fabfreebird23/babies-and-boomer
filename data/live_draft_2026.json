@@ -293,6 +293,12 @@
       "player_name": "Dalton Kincaid",
       "position": "TE",
       "nfl": "BUF"
+    },
+    "66": {
+      "player_id": "9500",
+      "player_name": "Josh Downs",
+      "position": "WR",
+      "nfl": "IND"
     }
   },
   "season": 2026
