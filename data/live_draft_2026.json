@@ -47,6 +47,12 @@
       "player_name": "Justin Jefferson",
       "position": "WR",
       "nfl": "MIN"
+    },
+    "11": {
+      "player_id": "4984",
+      "player_name": "Josh Allen",
+      "position": "QB",
+      "nfl": "BUF"
     }
   },
   "season": 2026
