@@ -371,6 +371,12 @@
       "player_name": "Rams D/ST",
       "position": "DST",
       "nfl": ""
+    },
+    "81": {
+      "player_id": "11563",
+      "player_name": "Bo Nix",
+      "position": "QB",
+      "nfl": "DEN"
     }
   },
   "season": 2026
