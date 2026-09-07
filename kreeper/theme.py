@@ -446,6 +446,8 @@ details.dc-row summary:hover{ background:rgba(255,206,31,.08); }
   .db-rd{ font-size:10px; }
   .hs-sm{ display:none; }
   .dbplayer{ gap:0; }
+  .dbplayer-txt b{ font-size:9.5px; }
+  .dbplayer-txt .pos{ font-size:8px; }
 
   .glance-stats{ gap:20px !important; }
   .contract-grid{ grid-template-columns:1fr !important; }
