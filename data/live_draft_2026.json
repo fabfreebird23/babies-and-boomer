@@ -359,6 +359,12 @@
       "player_name": "Travis Kelce",
       "position": "TE",
       "nfl": "KC"
+    },
+    "79": {
+      "player_id": "12534",
+      "player_name": "Kyle Monangai",
+      "position": "RB",
+      "nfl": "CHI"
     }
   },
   "season": 2026
