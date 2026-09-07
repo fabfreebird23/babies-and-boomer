@@ -455,6 +455,12 @@
       "player_name": "Broncos D/ST",
       "position": "DST",
       "nfl": ""
+    },
+    "97": {
+      "player_id": "8676",
+      "player_name": "Rashid Shaheed",
+      "position": "WR",
+      "nfl": "SEA"
     }
   },
   "season": 2026
