@@ -95,6 +95,12 @@
       "player_name": "Jadarian Price",
       "position": "RB",
       "nfl": "SEA"
+    },
+    "22": {
+      "player_id": "7611",
+      "player_name": "Rhamondre Stevenson",
+      "position": "RB",
+      "nfl": "NE"
     }
   },
   "season": 2026
