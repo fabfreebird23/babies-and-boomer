@@ -71,6 +71,12 @@
       "player_name": "Alvin Kamara",
       "position": "RB",
       "nfl": "NO"
+    },
+    "15": {
+      "player_id": "2359",
+      "player_name": "Ameer Abdullah",
+      "position": "RB",
+      "nfl": "JAX"
     }
   },
   "season": 2026
