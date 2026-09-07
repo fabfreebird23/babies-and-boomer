@@ -65,6 +65,12 @@
       "player_name": "A.J. Brown",
       "position": "WR",
       "nfl": "NE"
+    },
+    "14": {
+      "player_id": "7525",
+      "player_name": "DeVonta Smith",
+      "position": "WR",
+      "nfl": "PHI"
     }
   },
   "season": 2026
