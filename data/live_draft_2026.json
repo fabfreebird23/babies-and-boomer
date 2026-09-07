@@ -11,6 +11,12 @@
       "player_name": "Ja'Marr Chase",
       "position": "WR",
       "nfl": "CIN"
+    },
+    "3": {
+      "player_id": "4034",
+      "player_name": "Christian McCaffrey",
+      "position": "RB",
+      "nfl": "SF"
     }
   },
   "season": 2026
