@@ -491,6 +491,12 @@
       "player_name": "Dallas Goedert",
       "position": "TE",
       "nfl": "PHI"
+    },
+    "104": {
+      "player_id": "11646",
+      "player_name": "Jalen Coker",
+      "position": "WR",
+      "nfl": "CAR"
     }
   },
   "season": 2026
