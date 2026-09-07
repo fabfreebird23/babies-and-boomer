@@ -413,6 +413,12 @@
       "player_name": "Chris Bell",
       "position": "WR",
       "nfl": "MIA"
+    },
+    "90": {
+      "player_id": "13305",
+      "player_name": "Mike Washington Jr.",
+      "position": "RB",
+      "nfl": "LV"
     }
   },
   "season": 2026
