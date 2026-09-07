@@ -137,6 +137,12 @@
       "player_name": "Courtland Sutton",
       "position": "WR",
       "nfl": "DEN"
+    },
+    "31": {
+      "player_id": "4881",
+      "player_name": "Lamar Jackson",
+      "position": "QB",
+      "nfl": "BAL"
     }
   },
   "season": 2026
