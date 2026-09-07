@@ -35,6 +35,12 @@
       "player_name": "Aaron Rodgers",
       "position": "QB",
       "nfl": "PIT"
+    },
+    "7": {
+      "player_id": "13302",
+      "player_name": "Adam Randall",
+      "position": "RB",
+      "nfl": "BAL"
     }
   },
   "season": 2026
