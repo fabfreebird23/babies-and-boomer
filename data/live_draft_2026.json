@@ -581,6 +581,12 @@
       "player_name": "Khalil Shakir",
       "position": "WR",
       "nfl": "BUF"
+    },
+    "123": {
+      "player_id": "",
+      "player_name": "Jake Bates",
+      "position": "K",
+      "nfl": ""
     }
   },
   "season": 2026
