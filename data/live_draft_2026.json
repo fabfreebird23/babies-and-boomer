@@ -317,6 +317,12 @@
       "player_name": "RJ Harvey",
       "position": "RB",
       "nfl": "DEN"
+    },
+    "72": {
+      "player_id": "8408",
+      "player_name": "Jordan Mason",
+      "position": "RB",
+      "nfl": "MIN"
     }
   },
   "season": 2026
