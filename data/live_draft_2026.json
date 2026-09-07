@@ -365,6 +365,12 @@
       "player_name": "Kyle Monangai",
       "position": "RB",
       "nfl": "CHI"
+    },
+    "80": {
+      "player_id": "",
+      "player_name": "Rams D/ST",
+      "position": "DST",
+      "nfl": ""
     }
   },
   "season": 2026
