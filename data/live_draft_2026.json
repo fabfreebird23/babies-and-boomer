@@ -593,6 +593,12 @@
       "player_name": "Jason Myers",
       "position": "K",
       "nfl": ""
+    },
+    "125": {
+      "player_id": "8183",
+      "player_name": "Brock Purdy",
+      "position": "QB",
+      "nfl": "SF"
     }
   },
   "season": 2026
