@@ -23,6 +23,12 @@
       "player_name": "Jonathan Taylor",
       "position": "RB",
       "nfl": "IND"
+    },
+    "5": {
+      "player_id": "8138",
+      "player_name": "James Cook III",
+      "position": "RB",
+      "nfl": "BUF"
     }
   },
   "season": 2026
