@@ -239,6 +239,12 @@
       "player_name": "Jonathon Brooks",
       "position": "RB",
       "nfl": "CAR"
+    },
+    "52": {
+      "player_id": "11631",
+      "player_name": "Brian Thomas",
+      "position": "WR",
+      "nfl": "JAX"
     }
   },
   "season": 2026
