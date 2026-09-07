@@ -173,6 +173,12 @@
       "player_name": "Sam LaPorta",
       "position": "TE",
       "nfl": "DET"
+    },
+    "40": {
+      "player_id": "13298",
+      "player_name": "KC Concepcion",
+      "position": "WR",
+      "nfl": "CLE"
     }
   },
   "season": 2026
