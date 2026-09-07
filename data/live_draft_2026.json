@@ -29,6 +29,12 @@
       "player_name": "Aaron Jones Sr.",
       "position": "RB",
       "nfl": "MIN"
+    },
+    "6": {
+      "player_id": "96",
+      "player_name": "Aaron Rodgers",
+      "position": "QB",
+      "nfl": "PIT"
     }
   },
   "season": 2026
