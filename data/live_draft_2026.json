@@ -65,6 +65,12 @@
       "player_name": "Alec Pierce",
       "position": "WR",
       "nfl": "IND"
+    },
+    "14": {
+      "player_id": "4035",
+      "player_name": "Alvin Kamara",
+      "position": "RB",
+      "nfl": "NO"
     }
   },
   "season": 2026
