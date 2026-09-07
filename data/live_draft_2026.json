@@ -245,6 +245,12 @@
       "player_name": "Brian Thomas",
       "position": "WR",
       "nfl": "JAX"
+    },
+    "54": {
+      "player_id": "3294",
+      "player_name": "Dak Prescott",
+      "position": "QB",
+      "nfl": "DAL"
     }
   },
   "season": 2026
