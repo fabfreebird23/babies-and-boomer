@@ -515,6 +515,12 @@
       "player_name": "Denzel Boston",
       "position": "WR",
       "nfl": "CLE"
+    },
+    "109": {
+      "player_id": "PIT",
+      "player_name": "Pittsburgh Steelers",
+      "position": "DST",
+      "nfl": "PIT"
     }
   },
   "season": 2026
