@@ -233,6 +233,12 @@
       "player_name": "DK Metcalf",
       "position": "WR",
       "nfl": "PIT"
+    },
+    "51": {
+      "player_id": "11583",
+      "player_name": "Jonathon Brooks",
+      "position": "RB",
+      "nfl": "CAR"
     }
   },
   "season": 2026
