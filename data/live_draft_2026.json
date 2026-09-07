@@ -545,6 +545,12 @@
       "player_name": "Patriots D/ST",
       "position": "DST",
       "nfl": ""
+    },
+    "114": {
+      "player_id": "421",
+      "player_name": "Matthew Stafford",
+      "position": "QB",
+      "nfl": "LAR"
     }
   },
   "season": 2026
