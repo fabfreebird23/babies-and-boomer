@@ -167,6 +167,12 @@
       "player_name": "Michael Pittman Jr.",
       "position": "WR",
       "nfl": "PIT"
+    },
+    "36": {
+      "player_id": "10859",
+      "player_name": "Sam LaPorta",
+      "position": "TE",
+      "nfl": "DET"
     }
   },
   "season": 2026
