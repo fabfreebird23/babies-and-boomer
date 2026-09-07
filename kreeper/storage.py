@@ -126,18 +126,20 @@ def _ensure_branch(repo: str, branch: str, tok: str) -> None:
 
 def _gh_get(season: int) -> Tuple[Dict[str, List[Dict[str, Any]]], Optional[str]]:
     tok, repo, branch = _gh_config()
-    try:  # quota-free path first
+    # REST API first: it's always current. The shared read cache keeps this to
+    # a few calls a minute for the whole room. raw.githubusercontent.com is the
+    # fallback ONLY when the API is rate-limited — its CDN lags up to 5 minutes
+    # (query strings don't bust it), so it must never be the primary read.
+    r = requests.get(f"{_API}/repos/{repo}/contents/{_gh_path(season)}",
+                     headers=_headers(tok), params={"ref": branch}, timeout=15)
+    if r.status_code == 404:
+        return {}, None
+    if r.status_code in (403, 429):
         raw = _raw_get(repo, branch, _gh_path(season))
         if raw is None:
             return {}, None
         text = raw.decode()
         return (json.loads(text) if text.strip() else {}), _blob_sha(raw)
-    except Exception:  # noqa: BLE001
-        pass  # fall through to the REST API
-    r = requests.get(f"{_API}/repos/{repo}/contents/{_gh_path(season)}",
-                     headers=_headers(tok), params={"ref": branch}, timeout=15)
-    if r.status_code == 404:
-        return {}, None
     r.raise_for_status()
     j = r.json()
     content = base64.b64decode(j["content"]).decode()

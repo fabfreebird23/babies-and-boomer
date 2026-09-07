@@ -41,20 +41,22 @@ def _gh_fetch(season: int) -> Tuple[Dict[str, Any], Optional[str]]:
     from . import storage
     tok, repo, branch = storage._gh_config()  # noqa: SLF001
     path = _record_path(season)
-    try:
-        raw = storage._raw_get(repo, branch, path)  # noqa: SLF001
-        if raw is None:
-            return {}, None
-        text = raw.decode()
-        return (_json.loads(text) if text.strip() else {}), storage._blob_sha(raw)  # noqa: SLF001
-    except Exception:  # noqa: BLE001
-        pass
+    # REST API first (always current; the shared cache keeps volume low). The
+    # raw CDN is only the rate-limit fallback: it lags up to 5 minutes and
+    # query strings don't bust it, so as a primary read it hides fresh picks
+    # and hands saves a stale sha (409 conflicts).
     r = storage.requests.get(
         f"{storage._API}/repos/{repo}/contents/{path}",  # noqa: SLF001
         headers=storage._headers(tok), params={"ref": branch}, timeout=15,  # noqa: SLF001
     )
     if r.status_code == 404:
         return {}, None
+    if r.status_code in (403, 429):
+        raw = storage._raw_get(repo, branch, path)  # noqa: SLF001
+        if raw is None:
+            return {}, None
+        text = raw.decode()
+        return (_json.loads(text) if text.strip() else {}), storage._blob_sha(raw)  # noqa: SLF001
     r.raise_for_status()
     j = r.json()
     content = _b64.b64decode(j["content"]).decode()
