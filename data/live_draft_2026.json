@@ -119,6 +119,12 @@
       "player_name": "Terry McLaurin",
       "position": "WR",
       "nfl": "WAS"
+    },
+    "27": {
+      "player_id": "2133",
+      "player_name": "Davante Adams",
+      "position": "WR",
+      "nfl": "LAR"
     }
   },
   "season": 2026
