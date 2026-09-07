@@ -89,6 +89,12 @@
       "player_name": "David Montgomery",
       "position": "RB",
       "nfl": "HOU"
+    },
+    "21": {
+      "player_id": "13286",
+      "player_name": "Jadarian Price",
+      "position": "RB",
+      "nfl": "SEA"
     }
   },
   "season": 2026
