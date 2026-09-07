@@ -599,6 +599,12 @@
       "player_name": "Brock Purdy",
       "position": "QB",
       "nfl": "SF"
+    },
+    "126": {
+      "player_id": "4046",
+      "player_name": "Patrick Mahomes",
+      "position": "QB",
+      "nfl": "KC"
     }
   },
   "season": 2026
