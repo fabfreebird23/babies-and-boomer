@@ -1,4 +1,11 @@
 {
-  "picks": {},
+  "picks": {
+    "1": {
+      "player_id": "5859",
+      "player_name": "A.J. Brown",
+      "position": "WR",
+      "nfl": "NE"
+    }
+  },
   "season": 2026
 }
