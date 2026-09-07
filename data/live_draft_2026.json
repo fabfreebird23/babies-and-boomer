@@ -431,6 +431,12 @@
       "player_name": "Isaiah Likely",
       "position": "TE",
       "nfl": "NYG"
+    },
+    "93": {
+      "player_id": "13345",
+      "player_name": "Jonah Coleman",
+      "position": "RB",
+      "nfl": "DEN"
     }
   },
   "season": 2026
