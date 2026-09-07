@@ -17,6 +17,12 @@
       "player_name": "AJ Barner",
       "position": "TE",
       "nfl": "SEA"
+    },
+    "4": {
+      "player_id": "6828",
+      "player_name": "AJ Dillon",
+      "position": "",
+      "nfl": "CAR"
     }
   },
   "season": 2026
