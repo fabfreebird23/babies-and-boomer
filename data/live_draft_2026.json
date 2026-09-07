@@ -305,6 +305,12 @@
       "player_name": "Blake Corum",
       "position": "RB",
       "nfl": "LAR"
+    },
+    "70": {
+      "player_id": "7553",
+      "player_name": "Kyle Pitts Sr.",
+      "position": "TE",
+      "nfl": "ATL"
     }
   },
   "season": 2026
