@@ -401,6 +401,12 @@
       "player_name": "Rachaad White",
       "position": "RB",
       "nfl": "WAS"
+    },
+    "88": {
+      "player_id": "7523",
+      "player_name": "Trevor Lawrence",
+      "position": "QB",
+      "nfl": "JAX"
     }
   },
   "season": 2026
