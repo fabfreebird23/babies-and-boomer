@@ -101,6 +101,12 @@
       "player_name": "Rhamondre Stevenson",
       "position": "RB",
       "nfl": "NE"
+    },
+    "23": {
+      "player_id": "13279",
+      "player_name": "Carnell Tate",
+      "position": "WR",
+      "nfl": "TEN"
     }
   },
   "season": 2026
