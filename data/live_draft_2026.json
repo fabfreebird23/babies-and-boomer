@@ -617,6 +617,12 @@
       "player_name": "Evan McPherson",
       "position": "K",
       "nfl": "CIN"
+    },
+    "132": {
+      "player_id": "13337",
+      "player_name": "Emmett Johnson",
+      "position": "RB",
+      "nfl": "KC"
     }
   },
   "season": 2026
