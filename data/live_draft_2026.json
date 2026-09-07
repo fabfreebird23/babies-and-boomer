@@ -611,6 +611,12 @@
       "player_name": "Tyler Allgeier",
       "position": "RB",
       "nfl": "ARI"
+    },
+    "129": {
+      "player_id": "7839",
+      "player_name": "Evan McPherson",
+      "position": "K",
+      "nfl": "CIN"
     }
   },
   "season": 2026
