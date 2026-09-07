@@ -113,6 +113,12 @@
       "player_name": "Christian Watson",
       "position": "WR",
       "nfl": "GB"
+    },
+    "25": {
+      "player_id": "5927",
+      "player_name": "Terry McLaurin",
+      "position": "WR",
+      "nfl": "WAS"
     }
   },
   "season": 2026
