@@ -149,6 +149,12 @@
       "player_name": "Joe Burrow",
       "position": "QB",
       "nfl": "CIN"
+    },
+    "33": {
+      "player_id": "9487",
+      "player_name": "Parker Washington",
+      "position": "WR",
+      "nfl": "JAX"
     }
   },
   "season": 2026
