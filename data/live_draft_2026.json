@@ -275,6 +275,12 @@
       "player_name": "George Kittle",
       "position": "TE",
       "nfl": "SF"
+    },
+    "62": {
+      "player_id": "13281",
+      "player_name": "Jordyn Tyson",
+      "position": "WR",
+      "nfl": "NO"
     }
   },
   "season": 2026
