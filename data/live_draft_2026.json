@@ -107,6 +107,12 @@
       "player_name": "Carnell Tate",
       "position": "WR",
       "nfl": "TEN"
+    },
+    "24": {
+      "player_id": "8167",
+      "player_name": "Christian Watson",
+      "position": "WR",
+      "nfl": "GB"
     }
   },
   "season": 2026
