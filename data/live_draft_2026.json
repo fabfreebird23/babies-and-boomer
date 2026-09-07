@@ -185,6 +185,12 @@
       "player_name": "Harold Fannin Jr.",
       "position": "TE",
       "nfl": "CLE"
+    },
+    "42": {
+      "player_id": "7594",
+      "player_name": "Chuba Hubbard",
+      "position": "RB",
+      "nfl": "CAR"
     }
   },
   "season": 2026
