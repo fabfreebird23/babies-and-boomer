@@ -131,6 +131,12 @@
       "player_name": "Jaylen Warren",
       "position": "RB",
       "nfl": "PIT"
+    },
+    "30": {
+      "player_id": "5045",
+      "player_name": "Courtland Sutton",
+      "position": "WR",
+      "nfl": "DEN"
     }
   },
   "season": 2026
