@@ -269,6 +269,12 @@
       "player_name": "Makai Lemon",
       "position": "WR",
       "nfl": "PHI"
+    },
+    "61": {
+      "player_id": "4217",
+      "player_name": "George Kittle",
+      "position": "TE",
+      "nfl": "SF"
     }
   },
   "season": 2026
