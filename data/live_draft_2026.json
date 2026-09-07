@@ -533,6 +533,12 @@
       "player_name": "Ka'imi Fairbairn",
       "position": "K",
       "nfl": ""
+    },
+    "112": {
+      "player_id": "6797",
+      "player_name": "Justin Herbert",
+      "position": "QB",
+      "nfl": "LAC"
     }
   },
   "season": 2026
