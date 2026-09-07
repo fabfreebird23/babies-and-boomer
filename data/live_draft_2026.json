@@ -143,6 +143,12 @@
       "player_name": "Lamar Jackson",
       "position": "QB",
       "nfl": "BAL"
+    },
+    "32": {
+      "player_id": "6770",
+      "player_name": "Joe Burrow",
+      "position": "QB",
+      "nfl": "CIN"
     }
   },
   "season": 2026
