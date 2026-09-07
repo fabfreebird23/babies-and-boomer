@@ -125,6 +125,12 @@
       "player_name": "Davante Adams",
       "position": "WR",
       "nfl": "LAR"
+    },
+    "29": {
+      "player_id": "8228",
+      "player_name": "Jaylen Warren",
+      "position": "RB",
+      "nfl": "PIT"
     }
   },
   "season": 2026
