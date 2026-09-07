@@ -605,6 +605,12 @@
       "player_name": "Patrick Mahomes",
       "position": "QB",
       "nfl": "KC"
+    },
+    "128": {
+      "player_id": "8132",
+      "player_name": "Tyler Allgeier",
+      "position": "RB",
+      "nfl": "ARI"
     }
   },
   "season": 2026
