@@ -251,6 +251,12 @@
       "player_name": "Dak Prescott",
       "position": "QB",
       "nfl": "DAL"
+    },
+    "55": {
+      "player_id": "5850",
+      "player_name": "Josh Jacobs",
+      "position": "RB",
+      "nfl": "GB"
     }
   },
   "season": 2026
