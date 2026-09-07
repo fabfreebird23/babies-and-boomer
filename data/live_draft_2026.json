@@ -521,6 +521,12 @@
       "player_name": "Pittsburgh Steelers",
       "position": "DST",
       "nfl": "PIT"
+    },
+    "110": {
+      "player_id": "",
+      "player_name": "Chargers D/ST",
+      "position": "DST",
+      "nfl": ""
     }
   },
   "season": 2026
