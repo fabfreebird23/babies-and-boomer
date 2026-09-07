@@ -221,6 +221,12 @@
       "player_name": "Rico Dowdle",
       "position": "RB",
       "nfl": "PIT"
+    },
+    "49": {
+      "player_id": "13417",
+      "player_name": "De'Zhaun Stribling",
+      "position": "WR",
+      "nfl": "SF"
     }
   },
   "season": 2026
