@@ -299,6 +299,12 @@
       "player_name": "Josh Downs",
       "position": "WR",
       "nfl": "IND"
+    },
+    "68": {
+      "player_id": "11586",
+      "player_name": "Blake Corum",
+      "position": "RB",
+      "nfl": "LAR"
     }
   },
   "season": 2026
