@@ -161,6 +161,12 @@
       "player_name": "Alec Pierce",
       "position": "WR",
       "nfl": "IND"
+    },
+    "35": {
+      "player_id": "6819",
+      "player_name": "Michael Pittman Jr.",
+      "position": "WR",
+      "nfl": "PIT"
     }
   },
   "season": 2026
