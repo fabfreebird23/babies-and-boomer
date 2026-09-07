@@ -425,6 +425,12 @@
       "player_name": "Zach Charbonnet",
       "position": "RB",
       "nfl": "SEA"
+    },
+    "92": {
+      "player_id": "8131",
+      "player_name": "Isaiah Likely",
+      "position": "TE",
+      "nfl": "NYG"
     }
   },
   "season": 2026
