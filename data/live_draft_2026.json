@@ -1,1 +1,11 @@
-{}
+{
+  "picks": {
+    "999": {
+      "player_id": "9509",
+      "player_name": "Bijan Robinson",
+      "position": "RB",
+      "nfl": "ATL"
+    }
+  },
+  "season": 2026
+}
