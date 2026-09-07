@@ -311,6 +311,12 @@
       "player_name": "Kyle Pitts Sr.",
       "position": "TE",
       "nfl": "ATL"
+    },
+    "71": {
+      "player_id": "12489",
+      "player_name": "RJ Harvey",
+      "position": "RB",
+      "nfl": "DEN"
     }
   },
   "season": 2026
