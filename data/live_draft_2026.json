@@ -41,6 +41,12 @@
       "player_name": "Adam Randall",
       "position": "RB",
       "nfl": "BAL"
+    },
+    "10": {
+      "player_id": "6869",
+      "player_name": "Adam Trautman",
+      "position": "TE",
+      "nfl": "DEN"
     }
   },
   "season": 2026
