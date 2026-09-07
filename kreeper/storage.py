@@ -80,9 +80,42 @@ def _gh_path(season: int) -> str:
     return f"data/keepers_{season}.json"
 
 
+_RAW = "https://raw.githubusercontent.com"
+
+
+def _raw_get(repo: str, branch: str, path: str) -> Optional[bytes]:
+    """Read a file's exact bytes off raw.githubusercontent.com. This is served
+    by GitHub's CDN, NOT api.github.com, so it does not count against the
+    5,000/hour REST quota that a room full of auto-refreshing draft boards
+    exhausts in minutes. The query param defeats the CDN's 5-minute cache.
+    None on 404; raises on any other failure."""
+    tok = (_gh_config() or ("",))[0]
+    headers = {"Authorization": f"token {tok}"} if tok else {}
+    r = requests.get(f"{_RAW}/{repo}/{branch}/{path}", headers=headers,
+                     params={"nocache": str(time.time_ns())}, timeout=15)
+    if r.status_code == 404:
+        return None
+    r.raise_for_status()
+    return r.content
+
+
+def _blob_sha(raw: bytes) -> str:
+    """The git blob SHA of these exact bytes — what the Contents API wants as
+    `sha` on an update. Computing it locally saves the API GET per save."""
+    import hashlib
+    return hashlib.sha1(b"blob %d\0" % len(raw) + raw).hexdigest()  # noqa: S324
+
+
+_BRANCH_SEEN: set = set()
+
+
 def _ensure_branch(repo: str, branch: str, tok: str) -> None:
+    if (repo, branch) in _BRANCH_SEEN:
+        return
     h = _headers(tok)
-    if requests.get(f"{_API}/repos/{repo}/branches/{branch}", headers=h, timeout=15).status_code == 200:
+    st = requests.get(f"{_API}/repos/{repo}/branches/{branch}", headers=h, timeout=15).status_code
+    if st == 200 or st in (403, 429):  # rate-limited: assume the long-lived branch is there
+        _BRANCH_SEEN.add((repo, branch))
         return
     info = requests.get(f"{_API}/repos/{repo}", headers=h, timeout=15).json()
     default = info.get("default_branch", "main")
@@ -93,6 +126,14 @@ def _ensure_branch(repo: str, branch: str, tok: str) -> None:
 
 def _gh_get(season: int) -> Tuple[Dict[str, List[Dict[str, Any]]], Optional[str]]:
     tok, repo, branch = _gh_config()
+    try:  # quota-free path first
+        raw = _raw_get(repo, branch, _gh_path(season))
+        if raw is None:
+            return {}, None
+        text = raw.decode()
+        return (json.loads(text) if text.strip() else {}), _blob_sha(raw)
+    except Exception:  # noqa: BLE001
+        pass  # fall through to the REST API
     r = requests.get(f"{_API}/repos/{repo}/contents/{_gh_path(season)}",
                      headers=_headers(tok), params={"ref": branch}, timeout=15)
     if r.status_code == 404:
@@ -147,7 +188,11 @@ def load(season: int | None = None) -> Dict[str, List[Dict[str, Any]]]:
         try:
             return _gh_load_cached(season)
         except Exception:
-            pass  # fall back to local on any error
+            # Transient GitHub failure: serve the last good read rather than an
+            # empty local fallback (which blanks every keeper on the draft board).
+            c = _CACHE.get(season)
+            if c:
+                return c[1]
     return _local_load(season)
 
 

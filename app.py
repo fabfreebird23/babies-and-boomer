@@ -2610,7 +2610,9 @@ def _live_draft_body() -> None:
                     st.session_state.pop("ld_choice", None)
                     st.rerun(scope="fragment")
                 except Exception as e:  # noqa: BLE001
-                    st.error(f"Couldn't save — try again in a moment. ({type(e).__name__})")
+                    st.error("Couldn't save this pick — GitHub is throttling writes right now. "
+                             "Jot it down and log it again in a few minutes; the board itself "
+                             f"stays live. ({type(e).__name__})")
     else:
         st.success(f"All {total_picks} picks are in — the draft is complete.")
 
@@ -2673,15 +2675,21 @@ def _live_draft_body() -> None:
             if col2.button("Undo", key=f"ld_undo_{pn}"):
                 picks.pop(pn, None)
                 record["picks"] = picks
-                live_draft.save_record(record, SEASON)
-                st.rerun(scope="fragment")
+                try:
+                    live_draft.save_record(record, SEASON)
+                    st.rerun(scope="fragment")
+                except Exception as e:  # noqa: BLE001
+                    st.error(f"Couldn't undo right now — GitHub is throttling writes. ({type(e).__name__})")
 
     with st.expander("Reset the live draft"):
         st.caption("Clears every logged pick. Keepers aren't affected — they're computed "
                    "live from Set My Keepers, not stored here.")
         if st.button("Reset all picks", key="ld_reset"):
-            live_draft.save_record({}, SEASON)
-            st.rerun(scope="fragment")
+            try:
+                live_draft.save_record({}, SEASON)
+                st.rerun(scope="fragment")
+            except Exception as e:  # noqa: BLE001
+                st.error(f"Couldn't reset right now — GitHub is throttling writes. ({type(e).__name__})")
 
 
 def render_live_draft() -> None:
