@@ -353,6 +353,12 @@
       "player_name": "Romeo Doubs",
       "position": "WR",
       "nfl": "NE"
+    },
+    "78": {
+      "player_id": "1466",
+      "player_name": "Travis Kelce",
+      "position": "TE",
+      "nfl": "KC"
     }
   },
   "season": 2026
