@@ -539,6 +539,12 @@
       "player_name": "Justin Herbert",
       "position": "QB",
       "nfl": "LAC"
+    },
+    "113": {
+      "player_id": "",
+      "player_name": "Patriots D/ST",
+      "position": "DST",
+      "nfl": ""
     }
   },
   "season": 2026
