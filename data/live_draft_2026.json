@@ -461,6 +461,12 @@
       "player_name": "Rashid Shaheed",
       "position": "WR",
       "nfl": "SEA"
+    },
+    "98": {
+      "player_id": "",
+      "player_name": "Eagles D/ST",
+      "position": "DST",
+      "nfl": ""
     }
   },
   "season": 2026
