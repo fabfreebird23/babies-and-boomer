@@ -437,6 +437,12 @@
       "player_name": "Jonah Coleman",
       "position": "RB",
       "nfl": "DEN"
+    },
+    "94": {
+      "player_id": "",
+      "player_name": "Seahawks D/ST",
+      "position": "DST",
+      "nfl": ""
     }
   },
   "season": 2026
