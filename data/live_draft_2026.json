@@ -5,6 +5,12 @@
       "player_name": "Jeremiyah Love",
       "position": "RB",
       "nfl": "ARI"
+    },
+    "2": {
+      "player_id": "7564",
+      "player_name": "Ja'Marr Chase",
+      "position": "WR",
+      "nfl": "CIN"
     }
   },
   "season": 2026
