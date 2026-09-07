@@ -215,6 +215,12 @@
       "player_name": "Juwan Johnson",
       "position": "TE",
       "nfl": "NO"
+    },
+    "48": {
+      "player_id": "7021",
+      "player_name": "Rico Dowdle",
+      "position": "RB",
+      "nfl": "PIT"
     }
   },
   "season": 2026
