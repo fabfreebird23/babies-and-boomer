@@ -335,6 +335,12 @@
       "player_name": "Jordan Addison",
       "position": "WR",
       "nfl": "MIN"
+    },
+    "75": {
+      "player_id": "2449",
+      "player_name": "Stefon Diggs",
+      "position": "WR",
+      "nfl": "WAS"
     }
   },
   "season": 2026
