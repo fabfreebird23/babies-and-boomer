@@ -407,6 +407,12 @@
       "player_name": "Trevor Lawrence",
       "position": "QB",
       "nfl": "JAX"
+    },
+    "89": {
+      "player_id": "13311",
+      "player_name": "Chris Bell",
+      "position": "WR",
+      "nfl": "MIA"
     }
   },
   "season": 2026
