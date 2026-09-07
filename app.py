@@ -2631,6 +2631,34 @@ def _live_draft_body() -> None:
     html.append("</table></div>")
     st.markdown("".join(html), unsafe_allow_html=True)
 
+    export_rows = []
+    for (r, slot), c in sorted(cells.items(), key=lambda kv: kv[1]["pick_no"]):
+        ks = keeper_cell.get((r, slot))
+        live_pick = picks.get(str(c["pick_no"]))
+        base = {
+            "Pick": c["pick_no"], "Round": r, "Slot": slot,
+            "Team": c["owner_name"],
+            "Traded From": c["base_short"] if c.get("traded") else "",
+        }
+        if ks:
+            for k in ks:
+                export_rows.append({**base,
+                    "Type": "Rookie Keeper" if k.get("is_rookie_keeper") else "Keeper",
+                    "Player": k["player_name"], "Pos": k.get("position", ""), "NFL": ""})
+        elif live_pick:
+            export_rows.append({**base, "Type": "Live Pick",
+                "Player": live_pick["player_name"],
+                "Pos": _clean_pos(live_pick.get("position", "")),
+                "NFL": live_pick.get("nfl", "")})
+        else:
+            export_rows.append({**base, "Type": "", "Player": "", "Pos": "", "NFL": ""})
+    st.download_button(
+        "Download draft results (CSV)",
+        pd.DataFrame(export_rows).to_csv(index=False),
+        file_name=f"babies_and_boomer_draft_{SEASON}.csv", mime="text/csv",
+        key="ld_export",
+    )
+
     if picks:
         st.markdown("##### Recent picks")
         recent = sorted(picks.items(), key=lambda kv: -int(kv[0]))[:8]
