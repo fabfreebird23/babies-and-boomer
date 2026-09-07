@@ -485,6 +485,12 @@
       "player_name": "Ravens D/ST",
       "position": "DST",
       "nfl": ""
+    },
+    "103": {
+      "player_id": "5022",
+      "player_name": "Dallas Goedert",
+      "position": "TE",
+      "nfl": "PHI"
     }
   },
   "season": 2026
