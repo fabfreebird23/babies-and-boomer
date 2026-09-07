@@ -575,6 +575,12 @@
       "player_name": "Cam Little",
       "position": "K",
       "nfl": ""
+    },
+    "121": {
+      "player_id": "8134",
+      "player_name": "Khalil Shakir",
+      "position": "WR",
+      "nfl": "BUF"
     }
   },
   "season": 2026
