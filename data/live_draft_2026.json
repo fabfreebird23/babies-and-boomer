@@ -53,6 +53,12 @@
       "player_name": "Josh Allen",
       "position": "QB",
       "nfl": "BUF"
+    },
+    "12": {
+      "player_id": "7569",
+      "player_name": "Nico Collins",
+      "position": "WR",
+      "nfl": "HOU"
     }
   },
   "season": 2026
