@@ -2534,12 +2534,18 @@ def _live_draft_body() -> None:
     # Browsers block audio before any user gesture on the page, so the
     # very first chime of a session may be silent until someone taps
     # something — routine after that.
+    #
+    # The chime iframe is rendered on EVERY rerun (height 0), not just when a
+    # pick lands: inserting a brand-new component element mid-page makes the
+    # browser re-layout and jump the viewer to the top of the page every
+    # time someone picked. A slot that's always there just swaps content.
     last_seen = st.session_state.get("ld_seen_picks")
-    if st.session_state.get("ld_sound", True) and last_seen is not None and made > last_seen:
-        components.html(
-            "<script>(function(){"
-            "try{"
-            "const ctx = new (window.AudioContext || window.webkitAudioContext)();"
+    play = st.session_state.get("ld_sound", True) and last_seen is not None and made > last_seen
+    components.html(
+        "<script>(function(){"
+        f"if(!{'true' if play else 'false'}) return;"
+        "try{"
+        "const ctx = new (window.AudioContext || window.webkitAudioContext)();"
             "function tone(freq, start, dur){"
             "  const o = ctx.createOscillator(), g = ctx.createGain();"
             "  o.type = 'sine'; o.frequency.value = freq;"
@@ -2549,11 +2555,11 @@ def _live_draft_body() -> None:
             "  o.connect(g); g.connect(ctx.destination);"
             "  o.start(ctx.currentTime + start); o.stop(ctx.currentTime + start + dur + 0.05);"
             "}"
-            "tone(660, 0, 0.12); tone(880, 0.11, 0.2);"
-            "}catch(e){}"
-            "})();</script>",
-            height=0,
-        )
+        "tone(660, 0, 0.12); tone(880, 0.11, 0.2);"
+        "}catch(e){}"
+        "})();</script>",
+        height=0,
+    )
     st.session_state["ld_seen_picks"] = made
 
     if onclock:
