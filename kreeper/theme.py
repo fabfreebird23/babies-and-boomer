@@ -845,6 +845,18 @@ tr.playoff-cut td{ border-bottom:2px solid var(--accent) !important; }
   .masthead .status-line{ font-size:10px; }
 }
 
+/* injury-risk badge in lineup rows: grey when it's the usual in-game risk,
+   amber worth watching, coral high, solid coral out. Doubled classes beat
+   the markdown-span colour reset. */
+table.dt td.risk{ width:1%; white-space:nowrap; text-align:right; padding-left:4px; padding-right:4px; }
+[data-testid="stMarkdownContainer"] td.risk span.rkp.rkp{ display:inline-block; font-size:10.5px; font-weight:600;
+  padding:2px 7px; border-radius:999px; border:1px solid var(--line); color:var(--muted) !important; }
+[data-testid="stMarkdownContainer"] td.risk span.rkp.rkp.watch{ color:var(--amber) !important;
+  border-color:color-mix(in srgb, var(--amber) 45%, transparent); }
+[data-testid="stMarkdownContainer"] td.risk span.rkp.rkp.high{ color:var(--red) !important;
+  border-color:color-mix(in srgb, var(--red) 50%, transparent); }
+[data-testid="stMarkdownContainer"] td.risk span.rkp.rkp.out{ color:#fff !important; background:var(--red); border-color:var(--red); }
+
 </style>
 """
 
