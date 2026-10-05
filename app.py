@@ -16,7 +16,7 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from kreeper import config, draftboard, engine, history, live_draft, phase, storage, theme
+from kreeper import config, draftboard, engine, history, live_draft, phase, sleeper, storage, theme
 from kreeper.adp import consensus as adp_consensus
 from kreeper.names import normalize_name
 
@@ -155,6 +155,18 @@ def owned_for(owner_id: str):
     return get_owned().get(owner_id) if ENFORCE_OWNED else None
 
 
+@st.cache_data(ttl=600, show_spinner=False)
+def current_draft_done() -> bool:
+    """True once this season's draft has been run. After that its picks are
+    spent — they're players on rosters now — so anything that trades picks
+    has to start from next year's draft."""
+    try:
+        lg = sleeper.get_league(LEAGUE["sleeper_league_id"])
+        return (sleeper.get_draft(lg["draft_id"]) or {}).get("status") == "complete"
+    except Exception:
+        return False
+
+
 def current_pick_slots():
     """owner_id -> {round: [overall pick_no, ...]} for the CURRENT season, using
     the real snake- and trade-aware draft slots from the board (so a 1.01 and a
@@ -255,8 +267,7 @@ def build_candidate_rows(owner_id: str) -> pd.DataFrame:
         prof = H.keeper_profile(owner_id, pid, SEASON)
         rank = adp_rank_for(pm.name, pm.position)
         cost = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
-        from_rookie = (bool(storage.prior_rookie_seasons(owner_id, pid, SEASON))
-                       and not ever_regular_keeper(pid))
+        from_rookie = _rookie_ledger_holds(owner_id, pid) and not ever_regular_keeper(pid)
         # A rookie->regular conversion under original_round mode is costed like a
         # Year-1 keeper anchored at the rookie draft round (snapped to a pick you own).
         conv_anchor = rookie_draft_round(pid) if (from_rookie and ROOKIE_CONV_MODE == "original_round") else None
@@ -356,18 +367,17 @@ def _contract_card_html(row) -> str:
         badges.append(f'<span class="badge">Year {keep_year_int} of 3</span>')
     if adp_round:
         badges.append(f'<span class="badge">ADP R{adp_round}</span>')
-    surplus = None
-    if cost_round is not None and adp_round is not None:
-        surplus = adp_round - cost_round
+    surplus = keeper_value(row["ADP Rank"], cost_round) if (cost_round is not None and pd.notna(row["ADP Rank"])) else None
+    if surplus is not None:
         cls = "surplus-pos" if surplus > 0 else ("surplus-neg" if surplus < 0 else "")
         sign = f"+{surplus}" if surplus > 0 else str(surplus)
-        badges.append(f'<span class="badge {cls}">{sign} RD SURPLUS</span>')
+        badges.append(f'<span class="badge {cls}">{sign} KEEPER VALUE</span>')
 
     if not eligible:
         note = ("Not eligible to keep — clock's up or no pick left to use." if keep_year == "DONE"
                 else "No pick available at or before this round.")
-    elif surplus is not None and surplus > 5:
-        note = "Big discount to market — a strong keep."
+    elif surplus is not None and surplus >= 25:
+        note = "Worth far more than that round's pick would land — a strong keep."
     elif surplus is not None and surplus < 0:
         note = "Underwater vs. ADP — the market's moved past this cost."
     else:
@@ -413,6 +423,19 @@ def ever_regular_keeper(pid: str) -> bool:
     return any(p == pid and (p, s) not in H.rookie_kept_set for (p, s) in H.kept_set)
 
 
+def _rookie_ledger_holds(owner_id: str, pid: str, season: int = SEASON) -> bool:
+    """This owner kept him as a rookie keeper before AND has held him ever
+    since. A rookie keeper who was traded away and later came back is a
+    veteran pickup now — neither rookie-eligible nor a rookie->regular
+    conversion."""
+    prior = storage.prior_rookie_seasons(owner_id, pid, season)
+    if not prior:
+        return False
+    ps = H.player_seasons.get(str(pid), {})
+    return all(not ps.get(y) or str(ps[y].get("owner")) == str(owner_id)
+               for y in range(max(prior) + 1, season))
+
+
 def rookie_keeper_eligible(owner_id: str, pid: str) -> bool:
     """A player may be kept as a ROOKIE keeper only if THIS team drafted them in
     the player's rookie season and has held them continuously since. A trade (or
@@ -425,7 +448,7 @@ def rookie_keeper_eligible(owner_id: str, pid: str) -> bool:
         return False
     # An established rookie keeper for THIS owner stays eligible (seeded ledger
     # may predate our Sleeper draft window).
-    if storage.prior_rookie_seasons(owner_id, pid, SEASON):
+    if _rookie_ledger_holds(owner_id, pid):
         return True
     ye = _years_exp(pid)
     if ye is None:
@@ -460,10 +483,63 @@ def rookie_draft_round(pid: str):
     return ps[min(ps)].get("round") if ps else None
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def round_replacement_value() -> dict:
+    """{round: talent value of the player a pick in that round actually lands
+    once keepers are off the board}.
+
+    A keeper league's draft is a depleted pool: an early pick doesn't land an
+    early-round talent, it lands whoever's left after every team's keepers.
+    Built from the league's REAL keepers (this season's, else the latest
+    season that has them) — not a projection, since projected keepers are
+    chosen by this value and would be circular. Keepers occupy picks too, so
+    each round has fewer free picks than teams; a round is valued at its
+    middle free pick.
+    """
+    from collections import Counter
+    kept = {}
+    for yr in (SEASON, SEASON - 1, SEASON - 2):
+        kept = storage.load(yr)
+        if any(kept.values()):
+            break
+    kept_names, per_round = set(), Counter()
+    for picks in kept.values():
+        for x in picks:
+            if x.get("player_name"):
+                kept_names.add(normalize_name(x["player_name"]))
+            cr = x.get("cost_round")
+            if str(cr).isdigit():
+                per_round[int(cr)] += 1
+    ranks = sorted(int(r["consensus_rank"]) for _, r in ADP_DF.iterrows()
+                   if r.get("position") in ("QB", "RB", "WR", "TE") and not pd.isna(r.get("consensus_rank"))
+                   and normalize_name(r["name"]) not in kept_names)
+    out, cum = {}, 0
+    for rnd in range(1, DRAFT_ROUNDS + 1):
+        free = max(1, NT - per_round[rnd])
+        i = min(int(cum + free / 2), len(ranks) - 1) if ranks else 0
+        out[rnd] = _draft_value(ranks[i]) if ranks else _draft_value((rnd - 1) * NT + NT // 2)
+        cum += free
+    return out
+
+
+def keeper_value(adp_rank, cost_round) -> int | None:
+    """What keeping a player is worth: his talent (the draft-value curve at his
+    ADP, pick #1 ≈ 100) minus the talent that same round's pick would actually
+    land in our keeper-depleted draft (round_replacement_value). Credits an
+    elite player kept early — the old "cost round minus ADP round" scored a
+    1st-round star kept in the 1st as +0 — as well as the cheap late keeper.
+    """
+    if adp_rank is None or cost_round is None or pd.isna(adp_rank):
+        return None
+    return int(_draft_value(int(adp_rank)) - round_replacement_value().get(int(cost_round), 1))
+
+
 def build_value_leaderboard(top_n: int = 50, hide_rookie_keepers: bool = False) -> pd.DataFrame:
     """Best keeper bargains across every roster.
 
-    Value = keeper-cost round minus ADP round, i.e. how many rounds of draft
+    Value = keeper_value(): his talent minus what that round's pick would
+    actually land in our keeper-depleted draft. (Was: cost round minus ADP
+    round, i.e. how many rounds of draft
     capital you'd gain by keeping the player versus drafting them at market.
     The "Kept" column flags players a manager has already declared as a keeper.
     Real NFL rookies (years_exp == 0) are excluded — they live on the Rookies tab.
@@ -539,7 +615,7 @@ def build_value_leaderboard(top_n: int = 50, hide_rookie_keepers: bool = False) 
                     "Kept": is_kept, "Rookie": from_rookie, "FA": False,
                     "Keep Yr": keep_yr, "Cost Rd": cost_round,
                     "ADP": int(rank), "ADP Rd": adp_round,
-                    "Value": cost_round - adp_round,
+                    "Value": keeper_value(rank, cost_round),
                 }
             )
 
@@ -571,7 +647,7 @@ def build_value_leaderboard(top_n: int = 50, hide_rookie_keepers: bool = False) 
                 "Kept": False, "Rookie": False, "FA": True,
                 "Keep Yr": 1, "Cost Rd": fa_cost,
                 "ADP": int(rank), "ADP Rd": adp_round,
-                "Value": fa_cost - adp_round,
+                "Value": keeper_value(rank, fa_cost),
             }
         )
 
@@ -643,7 +719,7 @@ def build_trade_targets() -> pd.DataFrame:
                 "_pid": str(pid), "Player": pm.name, "Pos": pm.position,
                 "Owner": mgr, "Keep Yr": keep_yr, "Rookie": from_rookie,
                 "Cost Rd": int(cost_round), "ADP": int(rank), "ADP Rd": adp_round,
-                "Value": int(cost_round) - adp_round,
+                "Value": keeper_value(rank, cost_round),
             })
     return pd.DataFrame(rows)
 
@@ -868,7 +944,8 @@ def render_keeper_value_board() -> None:
     whatever's actually useful right now (see render_home)."""
     st.markdown('<h2 class="two-tone">Top 50 <span class="g">Keeper Values</span></h2>', unsafe_allow_html=True)
     st.caption("Best keeper bargains across every roster — draft value gained by keeping a "
-               "player (cost round vs. consensus ADP round). Green = declared keeper · "
+               "player: his talent minus what his cost round's pick would actually land once keepers "
+               "are off the board, so elite players kept early count too. Green = declared keeper · "
                "purple RK = rookie keeper · cyan = free agent. Real NFL rookies are on the ADP tab.")
     fc1, fc2, fc3 = st.columns([1, 1, 1])
     with fc1:
@@ -1117,8 +1194,8 @@ def render_trade_targets() -> None:
     st.markdown('<div class="neonwrap"><table class="lb lb-trade"><thead>' + head
                 + '</thead><tbody>' + "".join(rows) + '</tbody></table></div>',
                 unsafe_allow_html=True)
-    st.caption(f"Value = Round {rnd} − the player's ADP round (draft capital you'd "
-               "gain by keeping them there). **RK** = currently a rookie keeper — on a "
+    st.caption(f"Value = the player's talent minus what a Round {rnd} pick would actually "
+               "land once keepers are off the board. **RK** = currently a rookie keeper — on a "
                "trade they convert to a regular keeper at the round they were originally "
                "drafted as a rookie (rookie status doesn't transfer and the 3-year clock "
                "starts), which is the cost shown here.")
@@ -1277,7 +1354,7 @@ def render_trade_analyzer() -> None:
     if tt.empty:
         st.info("No keeper data yet — run `python scripts/refresh_adp.py` to populate ADP.")
         return
-    kv = {str(r["_pid"]): int(r["Value"]) for _, r in tt.iterrows()}     # keeper bargain (rounds)
+    kv = {str(r["_pid"]): int(r["Value"]) for _, r in tt.iterrows() if r["Value"] is not None}  # keeper value (talent pts)
     adp = {str(r["_pid"]): int(r["ADP"]) for _, r in tt.iterrows()}      # ADP rank
 
     names = list(NAME_TO_ID.keys())
@@ -1296,7 +1373,11 @@ def render_trade_analyzer() -> None:
                 out[f"{pm.name} ({pm.position})"] = str(pid)
         return out
 
-    pick_seasons = [SEASON, SEASON + 1, SEASON + 2]
+    # Once this year's draft has run its picks are gone, so the tradeable
+    # picks are the next three drafts — listing the spent year showed rounds a
+    # team no longer has (and hid the ones it does).
+    first_year = SEASON + 1 if current_draft_done() else SEASON
+    pick_seasons = [first_year, first_year + 1, first_year + 2]
     cur_slots = current_pick_slots()
     by_pick, by_round = pick_market_values()
 
@@ -1308,7 +1389,7 @@ def render_trade_analyzer() -> None:
         years use that round's average value, discounted ~20% per year out."""
         items = []
         for yr in pick_seasons:
-            discount = 0.8 ** (yr - SEASON)
+            discount = 0.8 ** (yr - first_year)
             if yr == SEASON:
                 for rnd in sorted(cur_slots.get(oid, {})):
                     for pick_no in cur_slots[oid][rnd]:
@@ -1339,7 +1420,7 @@ def render_trade_analyzer() -> None:
         pid = str(pid)
         ar = adp.get(pid) or adp_rank_for(H.player_meta(pid).name, H.player_meta(pid).position)
         talent = _draft_value(int(ar)) if ar else 4
-        bonus = max(0, kv.get(pid, 0)) * 6   # cheap-keeper edge, on top of talent
+        bonus = max(0, kv.get(pid, 0))   # keeper value — same talent-point units, on top of talent
         return talent + bonus
 
     def side_value(players, ropts, picks, pts_map):
@@ -2128,7 +2209,7 @@ def render_my_keepers() -> None:
         rank = adp_rank_for(r["Player"], r["Pos"])
         # Was a rookie keeper, now kept as a regular keeper. Under original_round
         # mode that costs their rookie draft round; the 3-year clock resets.
-        from_rookie = ((not is_rookie) and bool(storage.prior_rookie_seasons(owner_id, pid, SEASON))
+        from_rookie = ((not is_rookie) and _rookie_ledger_holds(owner_id, pid)
                        and not ever_regular_keeper(pid))
         if not is_rookie and not from_rookie:
             base = engine.compute(prof, adp_rank=rank, is_rookie_keeper=False)
