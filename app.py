@@ -823,6 +823,15 @@ def _select_keepers(team_lb, cap, pos_cap, seed_positions=None,
 
 
 @st.cache_data(ttl=300, show_spinner=False)
+def draft_keepers() -> dict:
+    """The keepers as they stood AT THE DRAFT, once it has run: every
+    submitted keeper, by the team that kept him — including players traded
+    or dropped since (Achane, Dart, Pacheco in 2026). Before the draft it's
+    submitted_keepers(), where a keeper traded away no longer counts for the
+    team that gave him up."""
+    return storage.load(SEASON) if current_draft_done() else submitted_keepers()
+
+
 def _projected_kept_ids() -> set:
     """player_ids likely off the draft board: everyone declared as a keeper, plus
     each team's most valuable eligible keepers (respecting roster + positional
@@ -2654,12 +2663,22 @@ def render_trade_analyzer() -> None:
 
 def render_keeper_landscape() -> None:
     st.markdown('<h2 class="two-tone">Keeper <span class="g">Landscape</span></h2>', unsafe_allow_html=True)
-    st.caption("Positional scarcity: of the top players at each position, who's "
-               "likely kept (and by whom) vs. left in the draft pool. Thin pools "
-               "= positions to target early; deep pools = wait.")
-    kept = _projected_kept_ids()
-    pid_owner = {}
-    for o, pids in CANDS.items():
+    done = current_draft_done()
+    if done:
+        # The draft has run: show who was actually kept, by the team that kept
+        # him — not a projection, and not whoever rosters him now.
+        st.caption("Positional scarcity: of the top players at each position, who was "
+                   "kept at the draft (and by whom) vs. who went into the pool.")
+        pid_owner = {str(x["player_id"]): config.manager_name(o)
+                     for o, picks in draft_keepers().items() for x in picks if x.get("player_id")}
+        kept = set(pid_owner)
+    else:
+        st.caption("Positional scarcity: of the top players at each position, who's "
+                   "likely kept (and by whom) vs. left in the draft pool. Thin pools "
+                   "= positions to target early; deep pools = wait.")
+        kept = _projected_kept_ids()
+        pid_owner = {}
+    for o, pids in ({} if done else CANDS).items():
         for pid in pids:
             pid_owner[str(pid)] = config.manager_name(o)
     name_idx = get_name_index()
@@ -2683,7 +2702,7 @@ def render_keeper_landscape() -> None:
             kept_n = sum(1 for *_, o in players if o)
             avail_n = len(players) - kept_n
             tone = "thin" if avail_n <= len(players) * 0.35 else ("moderate" if avail_n <= len(players) * 0.6 else "deep")
-            st.caption(f"Top {len(players)} {pos}s — **{kept_n} likely kept**, "
+            st.caption(f"Top {len(players)} {pos}s — **{kept_n} {'kept' if done else 'likely kept'}**, "
                        f"**{avail_n} available**. Draft pool: {tone}.")
             rows = []
             for rank, nm, pid, owner in players:
@@ -3686,7 +3705,7 @@ def _keeper_cell_map(board: dict) -> dict:
     to know which cells are already spoken for by a keeper."""
     from collections import defaultdict
     cells = board["cells"]
-    data = submitted_keepers()
+    data = draft_keepers()
     owner_to_slot = board["owner_to_slot"]
     owner_to_roster = board["owner_to_roster"]
     owned_slots = defaultdict(list)  # (round, roster_id) -> [slots that roster owns]
