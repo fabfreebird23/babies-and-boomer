@@ -110,3 +110,15 @@ adp_sources:
   # Yahoo / Underdog are extracted from the FootballGuys per-source columns
   # when available (no separate scraper / OAuth needed).
   include_aggregator_subcolumns: true
+
+# League payouts, shown as "The Money" on the in-season Home. The section stays
+# hidden until at least one place has an amount. Example:
+#   payouts:
+#     buy_in: 100
+#     places:
+#       - {label: "Champion",   amount: 700, note: "the title"}
+#       - {label: "Runner-up",  amount: 200, note: "lost the final"}
+#       - {label: "3rd Place",  amount: 100, note: "won the 3rd-place game"}
+payouts:
+  buy_in:
+  places: []
