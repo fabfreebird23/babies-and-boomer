@@ -55,6 +55,7 @@ def _fresh_kreeper() -> None:
 _fresh_kreeper()
 
 from kreeper import (config, draftboard, engine, gameday, history, live_draft, phase, season,
+                     playoffs, playoffs_view,
                      sleeper, storage, theme)
 from kreeper.adp import consensus as adp_consensus
 from kreeper.names import normalize_name
@@ -3662,6 +3663,36 @@ def build_championship_odds():
     return rows
 
 
+@st.cache_data(ttl=900, show_spinner="Simulating the rest of the season…")
+def get_playoff_outlook(me):
+    return playoffs.outlook(me=me)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_playoff_slate(me, season, week, slots, weeks):
+    return playoffs.playoff_slate(LEAGUE["sleeper_league_id"], season, week, me, list(slots), list(weeks))
+
+
+def render_playoffs() -> None:
+    """The Draft Room's Playoffs tab: the rest of the season 10,000 times on the
+    real schedule — your seed spread, win % each week, the biggest game, the
+    league table and your starters' playoff-week matchups."""
+    st.markdown(theme.section_head('Playoff <span class="g">Picture</span>', '10,000 simulations',
+                                   page=True), unsafe_allow_html=True)
+    me = _me()
+    out = get_playoff_outlook(me)
+    slate = None
+    if me and out["settings"]["playoff_weeks"]:
+        try:
+            slate = get_playoff_slate(me, out["season"], out["week"], tuple(out["settings"]["slots"]),
+                                      tuple(out["settings"]["playoff_weeks"]))
+        except Exception:  # noqa: BLE001 — a schedule hiccup must not take the page down
+            slate = {"rows": []}
+    playoffs_view.render(out, me, config.manager_name, slate,
+                         pick_team_hint="Pick your team from the masthead to see where you finish, "
+                                        "your win % each week and the game that matters most.")
+
+
 def render_odds() -> None:
     st.markdown(f'<h2 class="two-tone">{SEASON} <span class="g">Title Odds</span></h2>', unsafe_allow_html=True)
     st.caption("For fun — rosters reset at the draft, so this prices each team on "
@@ -4090,7 +4121,7 @@ INSEASON_GROUPS = [("week", "This Week"), ("trades", "Trades"), ("league", "Leag
 INSEASON_LEAVES = {
     "week": [("live", "Live"), ("matchup", "Matchup"), ("keepers", f"{SEASON + 1} Keepers")],
     "trades": [("recent", "Trades"), ("analyzer", "Trade Analyzer")],
-    "league": [("standings", "Standings"), ("lottery", "Draft-Order Lottery")],
+    "league": [("standings", "Standings"), ("playoffs", "Playoffs"), ("lottery", "Draft-Order Lottery")],
     "history": [("record", "Record Book")],
 }
 # Pages that were folded into another one. Old links (shared in the group
@@ -4326,6 +4357,7 @@ elif page == "inseason":
      ("trades", "recent"): lambda: _stack(render_recent_trades, render_trade_targets),
      ("trades", "analyzer"): render_trade_analyzer,
      ("league", "standings"): lambda: _stack(render_standings, render_power, render_odds),
+     ("league", "playoffs"): render_playoffs,
      ("league", "lottery"): render_lottery,
      ("history", "record"): lambda: _stack(render_record_book, render_superlatives, render_keeper_hitrate),
      }[(g, t)]()
