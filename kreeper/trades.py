@@ -55,9 +55,11 @@ def recent_trades(player_name_fn, league_id=None, limit: int = 8) -> List[Dict[s
         adds = tx.get("adds") or {}
         picks = tx.get("draft_picks") or []
         receives: Dict[int, List[str]] = {rid: [] for rid in roster_ids}
+        pid_of: Dict[str, str] = {}
         for pid, rid in adds.items():
             if rid in receives:
                 receives[rid].append(player_name_fn(pid))
+                pid_of[player_name_fn(pid)] = str(pid)
         for p in picks:
             owner = p.get("owner_id")
             if owner in receives:
@@ -65,5 +67,5 @@ def recent_trades(player_name_fn, league_id=None, limit: int = 8) -> List[Dict[s
         teams = [(config.manager_name(r2o.get(rid, "")), receives.get(rid, [])) for rid in roster_ids]
         ts = tx.get("status_updated")
         date = dt.datetime.fromtimestamp(ts / 1000).strftime("%b %d, %Y") if ts else ""
-        out.append({"teams": teams, "date": date})
+        out.append({"teams": teams, "date": date, "pid_of": pid_of})
     return out
