@@ -2752,19 +2752,19 @@ def render_trade_analyzer() -> None:
         return
 
     a_score, b_score = a_pv + a_pc, b_pv + b_pc
-    col1, col2 = st.columns(2)
-    for col, who, pv, pc, score in ((col1, a, a_pv, a_pc, a_score), (col2, b, b_pv, b_pc, b_score)):
-        col.markdown(f"#### {who} receives")
-        col.metric("Players", f"{round(pv)} pts", help="Talent (ADP position) + keeper bargain")
-        col.metric("Picks", f"{round(pc)} pts")
-        col.caption(f"Total value: **{round(score)}**")
-
     diff = a_score - b_score
-    if abs(diff) <= max(10, 0.08 * max(a_score, b_score, 1)):
-        st.success("Even deal — both sides come out roughly equal.")
-    else:
-        winner = a if diff > 0 else b
-        st.success(f"Edge to **{winner}** by ~{abs(round(diff))} pts.")
+    even = abs(diff) <= max(10, 0.08 * max(a_score, b_score, 1))
+    verdict = "Even deal" if even else f"Edge to {a if diff > 0 else b}"
+    share = 100 * a_score / max(1.0, a_score + b_score)
+    st.markdown(
+        f'<div class="kx xb"><div class="xb-s me"><div class="xb-t"><span>{a} receives</span>'
+        f'<b>{round(a_score)}</b><i>players {round(a_pv)} &middot; picks {round(a_pc)}</i></div></div>'
+        f'<div class="xb-m"><span class="xb-k">trade grade</span><b style="font-size:40px">{verdict}</b>'
+        f'<em>{"both sides roughly equal" if even else f"by ~{abs(round(diff))} pts"}</em>'
+        f'<div class="xb-bar"><i style="width:{share:.0f}%"></i></div></div>'
+        f'<div class="xb-s op"><div class="xb-t"><span>{b} receives</span>'
+        f'<b>{round(b_score)}</b><i>players {round(b_pv)} &middot; picks {round(b_pc)}</i></div></div></div>'
+        f'<div class="xb-gap"></div>', unsafe_allow_html=True)
     st.caption("Heuristic only — player value = a draft-value curve at their ADP "
                "plus a bonus for any keeper discount. Picks are valued by the player "
                "projected available at that slot once keepers are off the board, "
@@ -3420,6 +3420,15 @@ def render_mock_draft() -> None:
         view = df[df["Round"] <= 3]
     else:
         view = df[df["Round"] == int(only_rd.split()[1])]
+    me = _me()
+    if me:
+        _mine = df[(df["Team"] == config.manager_name(me)) & (~df["Keeper"].astype(bool))].sort_values(["Round", "Slot"])
+        if not _mine.empty:
+            r0 = _mine.iloc[0]
+            st.markdown(_bh("ink", "Projected draft · keepers in their slots, best available elsewhere",
+                            f'{int(r0["Round"])}.{int(r0["Slot"]):02d}',
+                            f'your first live pick — projected to land <b>{r0["Player"]}</b>',
+                            photo=r0.get("_pid")), unsafe_allow_html=True)
     rows = []
     multi_round = view["Round"].nunique() > 1
     cur_round = None
@@ -3431,7 +3440,7 @@ def render_mock_draft() -> None:
         tag = (' <span class="kept-badge">KEEP</span>' if keep
                else (' <span class="rk-badge">RK</span>' if r["Rookie"] else ""))
         adp = "" if (keep or not r["ADP"]) else r["ADP"]
-        tr = ' style="background:rgba(255,206,31,.18);"' if keep else ""
+        tr = ' class="kept"' if keep else ""
         rows.append(
             f'<tr{tr}><td class="rk">{int(r["Round"])}.{int(r["Slot"]):02d}</td>'
             f'<td class="pl">{theme.img_tag(r["_pid"])}{r["Player"]}{tag}</td>'
@@ -3900,6 +3909,18 @@ def render_draft_board() -> None:
 
     teams, rounds, cells = board["teams"], board["rounds"], board["cells"]
     keeper_cell = _keeper_cell_map(board)
+    me = _me()
+    _rid = board.get("owner_to_roster", {}).get(str(me)) if me else None
+    if _rid is not None:
+        _mine = sorted(c["pick_no"] for c in cells.values() if c["owner_roster"] == _rid)
+        _rounds = {r for (r, _sl), c in cells.items() if c["owner_roster"] == _rid}
+        _missing = [r for r in range(1, rounds + 1) if r not in _rounds]
+        _kept = sum(1 for (r, sl), ks in keeper_cell.items() if cells[(r, sl)]["owner_roster"] == _rid for _k in ks)
+        st.markdown(_bh("ink", f"{SEASON} draft · {teams} teams · {rounds} rounds", str(len(_mine)),
+                        "picks you hold" + (f" — first at <b>#{_mine[0]}</b>" if _mine else "")
+                        + (f", {_kept} spent on keepers" if _kept else "")
+                        + (f" · no R{', R'.join(map(str, _missing))}" if _missing else "")),
+                    unsafe_allow_html=True)
     html = ['<div class="neonwrap"><table class="dboard">']
     html.append('<tr><th style="width:32px;">Rd</th>')
     for slot in range(1, teams + 1):

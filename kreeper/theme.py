@@ -1117,6 +1117,17 @@ table.dt td.risk{ width:1%; white-space:nowrap; text-align:right; padding-left:4
 .kx .ls-r b{ font-family:'Oswald',sans-serif; font-weight:500; font-size:15px; color:var(--ink); }
 [data-testid="stMarkdownContainer"] .kx .ls-s{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted) !important; }
 [data-testid="stMarkdownContainer"] .kx .ls-r.lsav .ls-s{ color:#8a6a00 !important; font-weight:700; }
+
+/* ==== the remaining tools, in the editorial look (light page) ============= */
+.dboard .db-keep{ background:rgba(255,206,31,.22) !important; color:#5c4500 !important; box-shadow:inset 0 0 0 1px rgba(201,151,0,.5) !important; }
+.dboard .db-traded{ background:rgba(75,45,159,.12) !important; color:#2a1a5e !important; }
+.dboard th{ font-family:'Roboto Mono',monospace !important; font-size:10px !important; letter-spacing:.12em !important; }
+.dboard td.db-rd{ font-family:'Anton',sans-serif !important; font-size:18px !important; color:var(--muted) !important; }
+table.lb thead th{ font-family:'Roboto Mono',monospace !important; font-size:10px !important; letter-spacing:.12em !important; }
+table.lb td.rk{ font-family:'Anton',sans-serif !important; font-weight:400 !important; font-size:18px !important; color:var(--muted) !important; }
+table.lb td.pl{ font-family:'Oswald',sans-serif !important; font-weight:500 !important; font-size:15px !important; }
+table.lb td.pl img{ filter:grayscale(1); }
+table.lb tr.kept td{ background:rgba(255,206,31,.16); }
 </style>
 """
 
