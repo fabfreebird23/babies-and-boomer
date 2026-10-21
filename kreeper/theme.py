@@ -1105,6 +1105,18 @@ table.dt td.risk{ width:1%; white-space:nowrap; text-align:right; padding-left:4
 .po-wk.big{ background:#4b2d9f !important; border-color:#4b2d9f !important; } .po-big{ background:#4b2d9f !important; }
 .po-wk.big b, .po-big div b{ color:#fff !important; }
 .po-sd.in i{ background:linear-gradient(180deg,#ffce1f,#4b2d9f) !important; }
+
+/* pre-season: contract faces, the landscape as a ranked list (light page) */
+.ccard .ccard-top{ display:flex; align-items:center; gap:12px; }
+.ccard .ccard-top .cost{ margin-left:auto; }
+.ccard .cface{ width:52px; height:52px; border-radius:10px; object-fit:cover !important; object-position:top !important; filter:grayscale(1);
+  background:var(--panel2); flex:none; }
+.kx .ls-r{ display:grid; grid-template-columns:40px 34px minmax(0,1fr) auto; gap:10px; align-items:center; padding:7px 8px; border-bottom:1px solid var(--line); }
+.kx .ls-r.lsav{ background:linear-gradient(90deg,rgba(255,206,31,.18),transparent 70%); border-radius:8px; }
+[data-testid="stMarkdownContainer"] .kx .ls-n{ font-family:'Anton',sans-serif; font-size:20px; color:var(--muted) !important; }
+.kx .ls-r b{ font-family:'Oswald',sans-serif; font-weight:500; font-size:15px; color:var(--ink); }
+[data-testid="stMarkdownContainer"] .kx .ls-s{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted) !important; }
+[data-testid="stMarkdownContainer"] .kx .ls-r.lsav .ls-s{ color:#8a6a00 !important; font-weight:700; }
 </style>
 """
 
